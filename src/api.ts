@@ -47,12 +47,6 @@ export const api = {
   async tasks() {
     return request<{ tasks: LibraryTask[] }>('/api/tasks');
   },
-  async createTask(name: string) {
-    return request<{ task: LibraryTask }>('/api/tasks', {
-      method: 'POST',
-      body: JSON.stringify({ name }),
-    });
-  },
   async renameTask(taskId: number, name: string) {
     return request<{ task: LibraryTask }>(`/api/tasks/${taskId}`, {
       method: 'PATCH',

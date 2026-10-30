@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
-import { api, ApiError } from '../api';
-import type { CalendarStats, DayData, LibraryTask, User } from '../types';
-import { monthKey, shiftMonth, todayKey } from '../utils/date';
-import AppIcon from './AppIcon.vue';
-import HeroCard from './HeroCard.vue';
-import CheckinCalendar from './CheckinCalendar.vue';
-import TaskList from './TaskList.vue';
-import AddTaskModal from './AddTaskModal.vue';
-import ArrangeTasksModal from './ArrangeTasksModal.vue';
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { api, ApiError } from "../api";
+import type { CalendarStats, DayData, LibraryTask, User } from "../types";
+import { monthKey, shiftMonth, todayKey } from "../utils/date";
+import AppIcon from "./AppIcon.vue";
+import HeroCard from "./HeroCard.vue";
+import CheckinCalendar from "./CheckinCalendar.vue";
+import TaskList from "./TaskList.vue";
+import AddTaskModal from "./AddTaskModal.vue";
+import ArrangeTasksModal from "./ArrangeTasksModal.vue";
 
 const props = defineProps<{ user: User }>();
 const emit = defineEmits<{ loggedOut: [] }>();
@@ -25,23 +25,30 @@ const updatingIds = ref(new Set<number>());
 const arrangeOpen = ref(false);
 const addOpen = ref(false);
 const saving = ref(false);
-const addError = ref('');
-const pageError = ref('');
-const toast = ref('');
+const addError = ref("");
+const pageError = ref("");
+const toast = ref("");
 let dayRequest = 0;
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 
-const userInitial = computed(() => props.user.username.trim().charAt(0).toUpperCase());
-const selectedTaskIds = computed(() => day.value?.tasks.map((task) => task.id) || []);
+const userInitial = computed(() =>
+  props.user.username.trim().charAt(0).toUpperCase()
+);
+const selectedTaskIds = computed(
+  () => day.value?.tasks.map((task) => task.id) || []
+);
+const isTodaySelected = computed(() => selectedDate.value === todayKey());
 
 function showToast(message: string) {
   toast.value = message;
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { toast.value = ''; }, 2600);
+  toastTimer = setTimeout(() => {
+    toast.value = "";
+  }, 2600);
 }
 
 function errorText(error: unknown): string {
-  return error instanceof ApiError ? error.message : '网络连接失败，请稍后重试';
+  return error instanceof ApiError ? error.message : "网络连接失败，请稍后重试";
 }
 
 async function loadDay() {
@@ -84,7 +91,7 @@ async function refreshActivity() {
 }
 
 async function initialize() {
-  pageError.value = '';
+  pageError.value = "";
   dayLoading.value = true;
   try {
     const [tasks] = await Promise.all([
@@ -106,7 +113,10 @@ async function selectDate(date: string) {
   const nextMonth = date.slice(0, 7);
   const monthChanged = nextMonth !== viewMonth.value;
   viewMonth.value = nextMonth;
-  await Promise.all([loadDay(), monthChanged ? loadCalendar() : Promise.resolve()]);
+  await Promise.all([
+    loadDay(),
+    monthChanged ? loadCalendar() : Promise.resolve(),
+  ]);
 }
 
 async function goToday() {
@@ -121,7 +131,7 @@ async function toggleTask(taskId: number, completed: boolean) {
   if (!previous) return;
   updatingIds.value = new Set([...updatingIds.value, taskId]);
   const optimisticTasks = previous.tasks.map((task) =>
-    task.id === taskId ? { ...task, completed } : task,
+    task.id === taskId ? { ...task, completed } : task
   );
   day.value = {
     ...previous,
@@ -132,8 +142,12 @@ async function toggleTask(taskId: number, completed: boolean) {
     const response = await api.setCompleted(date, taskId, completed);
     if (selectedDate.value === date) day.value = response;
     await refreshActivity();
-    if (response.total > 0 && response.completed === response.total && completed) {
-      showToast('当日任务全部完成，真棒！');
+    if (
+      response.total > 0 &&
+      response.completed === response.total &&
+      completed
+    ) {
+      showToast("当日任务全部完成，真棒！");
     }
   } catch (error) {
     if (selectedDate.value === date) day.value = previous;
@@ -165,7 +179,7 @@ async function saveArrangement(taskIds: number[]) {
 async function saveNewTask(name: string) {
   if (saving.value) return;
   saving.value = true;
-  addError.value = '';
+  addError.value = "";
   const date = selectedDate.value;
   try {
     const response = await api.addTask(date, name);
@@ -182,13 +196,9 @@ async function saveNewTask(name: string) {
   }
 }
 
-function libraryTaskCreated(task: LibraryTask) {
-  libraryTasks.value = [...libraryTasks.value, task];
-}
-
 async function libraryTaskRenamed(task: LibraryTask) {
   libraryTasks.value = libraryTasks.value.map((item) =>
-    item.id === task.id ? task : item,
+    item.id === task.id ? task : item
   );
   await Promise.all([loadDay(), refreshActivity()]);
 }
@@ -199,12 +209,18 @@ async function libraryTaskDeleted(taskId: number) {
 }
 
 async function logout() {
-  try { await api.logout(); } catch { /* 本地仍会退出 */ }
-  emit('loggedOut');
+  try {
+    await api.logout();
+  } catch {
+    /* 本地仍会退出 */
+  }
+  emit("loggedOut");
 }
 
 onMounted(initialize);
-onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
+onBeforeUnmount(() => {
+  if (toastTimer) clearTimeout(toastTimer);
+});
 </script>
 
 <template>
@@ -221,13 +237,27 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
           </div>
         </div>
         <div class="header-actions">
-          <button class="today-button" type="button" @click="goToday">今天</button>
+          <button
+            class="today-button"
+            :class="{ selected: isTodaySelected }"
+            type="button"
+            :aria-pressed="isTodaySelected"
+            @click="goToday"
+          >
+            今天
+          </button>
           <div class="user-chip" :title="`当前账号：${user.username}`">
             <span class="user-avatar"><AppIcon name="user" :size="18" /></span>
             <span class="username">{{ user.username }}</span>
           </div>
-          <button class="logout-button" type="button" aria-label="退出登录" title="退出登录" @click="logout">
-            <AppIcon name="logout" :size="18" />
+          <button
+            class="logout-button"
+            type="button"
+            aria-label="退出登录"
+            title="退出登录"
+            @click="logout"
+          >
+            <AppIcon name="logout" :size="24" />
           </button>
         </div>
       </header>
@@ -251,7 +281,10 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
         :selected-date="selectedDate"
         :stats="calendarStats"
         :loading="calendarLoading"
-        @navigate="viewMonth = shiftMonth(viewMonth, $event); loadCalendar()"
+        @navigate="
+          viewMonth = shiftMonth(viewMonth, $event);
+          loadCalendar();
+        "
         @select="selectDate"
         @today="goToday"
       />
@@ -262,7 +295,10 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
         :updating-ids="updatingIds"
         @toggle="toggleTask"
         @arrange="arrangeOpen = true"
-        @add="addError = ''; addOpen = true"
+        @add="
+          addError = '';
+          addOpen = true;
+        "
       />
 
       <footer class="app-footer">
@@ -279,7 +315,6 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
       :saving="saving"
       @close="arrangeOpen = false"
       @save="saveArrangement"
-      @created="libraryTaskCreated"
       @renamed="libraryTaskRenamed"
       @deleted="libraryTaskDeleted"
     />
@@ -306,7 +341,11 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   overflow: hidden;
   background: var(--color-background-outer);
 }
-.page-orb { position: fixed; border-radius: 50%; pointer-events: none; }
+.page-orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+}
 .page-orb-one {
   width: 20rem;
   height: 20rem;
@@ -333,8 +372,18 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   border-radius: 0;
   box-shadow: none;
 }
-.app-header { display: flex; align-items: center; justify-content: space-between; gap: 0.625rem; }
-.brand { min-width: 0; display: flex; align-items: center; gap: 0.625rem; }
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+}
+.brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
 .brand-mark {
   width: 2.625rem;
   height: 2.625rem;
@@ -345,9 +394,21 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   background: var(--color-primary-soft);
   border-radius: 0.875rem;
 }
-.brand h1 { font-size: 1.125rem; line-height: 1.35; }
-.brand p { margin-top: 0.0625rem; color: var(--color-text-secondary); font-size: 0.625rem; letter-spacing: 0.06em; }
-.header-actions { display: flex; align-items: center; gap: 0.375rem; }
+.brand h1 {
+  font-size: 1.125rem;
+  line-height: 1.35;
+}
+.brand p {
+  margin-top: 0.0625rem;
+  color: var(--color-text-secondary);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
 .today-button {
   min-height: 2.125rem;
   padding: 0.375rem 0.625rem;
@@ -356,8 +417,20 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   border: 0.0625rem solid var(--color-border);
   border-radius: 0.625rem;
   font-size: 0.6875rem;
+  transition: color 150ms ease, background-color 150ms ease,
+    border-color 150ms ease;
 }
-.user-chip { display: flex; align-items: center; gap: 0.3125rem; color: var(--color-text-secondary); }
+.today-button.selected {
+  color: var(--color-surface);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.3125rem;
+  color: var(--color-text-secondary);
+}
 .user-avatar {
   width: 2.125rem;
   height: 2.125rem;
@@ -368,7 +441,9 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   border: 0.125rem solid var(--color-surface);
   border-radius: 50%;
 }
-.username { display: none; }
+.username {
+  display: none;
+}
 .logout-button {
   width: 2rem;
   height: 2rem;
@@ -379,8 +454,13 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   border: 0;
   border-radius: 0.5625rem;
 }
-.logout-button:hover { color: var(--color-danger); background: var(--color-danger-soft); }
-.hero-wrapper { margin-top: 1.4375rem; }
+.logout-button:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-soft);
+}
+.hero-wrapper {
+  margin-top: 1.4375rem;
+}
 .page-error {
   margin-top: 1rem;
   padding: 0.625rem 0.75rem;
@@ -393,7 +473,13 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   border-radius: 0.6875rem;
   font-size: 0.6875rem;
 }
-.page-error button { padding: 0.1875rem 0.5rem; color: var(--color-danger); background: var(--color-surface); border: 0; border-radius: 0.375rem; }
+.page-error button {
+  padding: 0.1875rem 0.5rem;
+  color: var(--color-danger);
+  background: var(--color-surface);
+  border: 0;
+  border-radius: 0.375rem;
+}
 .app-footer {
   margin-top: 1.5rem;
   display: flex;
@@ -404,7 +490,9 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   font-size: 0.5625rem;
   letter-spacing: 0.03em;
 }
-.app-footer .app-icon { color: var(--color-primary); }
+.app-footer .app-icon {
+  color: var(--color-primary);
+}
 .toast-message {
   position: fixed;
   z-index: 120;
@@ -421,10 +509,17 @@ onBeforeUnmount(() => { if (toastTimer) clearTimeout(toastTimer); });
   text-align: center;
   pointer-events: none;
 }
-.checkin-shell.modal-open .toast-message { top: 1.375rem; bottom: auto; }
+.checkin-shell.modal-open .toast-message {
+  top: 1.375rem;
+  bottom: auto;
+}
 .toast-enter-active,
-.toast-leave-active { transition: opacity 180ms ease, transform 180ms ease; }
+.toast-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
 .toast-enter-from,
-.toast-leave-to { opacity: 0; transform: translate(-50%, 0.5rem); }
-
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, 0.5rem);
+}
 </style>

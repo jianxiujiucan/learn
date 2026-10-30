@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { DayData } from '../types';
-import AppIcon from './AppIcon.vue';
+import type { DayData } from "../types";
+import AppIcon from "./AppIcon.vue";
 
 defineProps<{
   day: DayData | null;
@@ -21,20 +21,30 @@ const emit = defineEmits<{
         <h2 id="task-title">当日任务</h2>
         <p>认真完成的每一件小事，都算数</p>
       </div>
-      <span class="task-count">{{ day?.completed || 0 }} / {{ day?.total || 0 }} 已完成</span>
+      <span class="task-count"
+        >{{ day?.completed || 0 }} / {{ day?.total || 0 }} 已完成</span
+      >
     </header>
     <div
       class="task-progress"
       role="progressbar"
       aria-label="任务完成进度"
-      :aria-valuenow="day?.total ? Math.round((day.completed / day.total) * 100) : 0"
+      :aria-valuenow="
+        day?.total ? Math.round((day.completed / day.total) * 100) : 0
+      "
       aria-valuemin="0"
       aria-valuemax="100"
     >
-      <span :style="{ width: `${day?.total ? (day.completed / day.total) * 100 : 0}%` }"></span>
+      <span
+        :style="{
+          width: `${day?.total ? (day.completed / day.total) * 100 : 0}%`,
+        }"
+      ></span>
     </div>
 
-    <div v-if="loading" class="task-loading" role="status">正在读取当日任务…</div>
+    <div v-if="loading" class="task-loading" role="status">
+      正在读取当日任务…
+    </div>
     <div v-else-if="!day?.tasks.length" class="empty-state">
       <AppIcon name="calendar" :size="34" />
       <h3>这一天还没有任务</h3>
@@ -45,17 +55,22 @@ const emit = defineEmits<{
         v-for="task in day.tasks"
         :key="task.id"
         class="task-row"
-        :class="{ completed: task.completed, updating: updatingIds.has(task.id) }"
+        :class="{
+          completed: task.completed,
+          updating: updatingIds.has(task.id),
+        }"
       >
         <input
           type="checkbox"
           :checked="task.completed"
           :disabled="updatingIds.has(task.id)"
-          @change="emit('toggle', task.id, ($event.target as HTMLInputElement).checked)"
+          @change="
+            emit('toggle', task.id, ($event.target as HTMLInputElement).checked)
+          "
         />
         <span class="custom-check"><AppIcon name="check" :size="15" /></span>
         <span class="task-name">{{ task.name }}</span>
-        <span class="task-tag">{{ task.completed ? '已完成' : '待完成' }}</span>
+        <span class="task-tag">{{ task.completed ? "已完成" : "待完成" }}</span>
       </label>
     </div>
 
@@ -71,10 +86,23 @@ const emit = defineEmits<{
 </template>
 
 <style scoped lang="scss">
-.task-section { margin-top: 1.4375rem; }
-.task-heading { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
-.task-heading h2 { font-size: 1.125rem; }
-.task-heading p { margin-top: 0.125rem; color: var(--color-text-muted); font-size: 0.6875rem; }
+.task-section {
+  margin-top: 1.4375rem;
+}
+.task-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.task-heading h2 {
+  font-size: 1.125rem;
+}
+.task-heading p {
+  margin-top: 0.125rem;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+}
 .task-count {
   flex: 0 0 auto;
   padding: 0.3125rem 0.625rem;
@@ -98,7 +126,12 @@ const emit = defineEmits<{
   border-radius: inherit;
   transition: width 250ms ease;
 }
-.task-list { margin-top: 0.8125rem; display: flex; flex-direction: column; gap: 0.5625rem; }
+.task-list {
+  margin-top: 0.8125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5625rem;
+}
 .task-row {
   min-height: 3.5625rem;
   padding: 0.625rem 0.875rem;
@@ -112,8 +145,12 @@ const emit = defineEmits<{
   cursor: pointer;
   transition: border-color 150ms ease, opacity 150ms ease;
 }
-.task-row:hover { border-color: var(--color-primary-soft); }
-.task-row.updating { opacity: 0.65; }
+.task-row:hover {
+  border-color: var(--color-primary-soft);
+}
+.task-row.updating {
+  opacity: 0.65;
+}
 .task-row input {
   position: absolute;
   width: 0.0625rem;
@@ -131,22 +168,48 @@ const emit = defineEmits<{
   border: 0.0938rem solid var(--color-border-strong);
   border-radius: 0.5rem;
 }
-.custom-check .app-icon { opacity: 0; }
-.task-row input:focus-visible + .custom-check { outline: 0.1875rem solid var(--color-focus); outline-offset: 0.125rem; }
-.task-row.completed .custom-check { background: var(--color-primary); border-color: var(--color-primary); }
-.task-row.completed .custom-check .app-icon { opacity: 1; }
-.task-name { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 0.8125rem; font-weight: 550; }
-.completed .task-name { color: var(--color-text-completed); text-decoration: line-through; }
+.custom-check .app-icon {
+  opacity: 0;
+}
+.task-row input:focus-visible + .custom-check {
+  outline: 0.1875rem solid var(--color-focus);
+  outline-offset: 0.125rem;
+}
+.task-row.completed .custom-check {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.task-row.completed .custom-check .app-icon {
+  opacity: 1;
+}
+.task-name {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  font-weight: 550;
+}
+.completed .task-name {
+  color: var(--color-text-completed);
+  text-decoration: line-through;
+}
 .task-tag {
   flex: 0 0 auto;
-  padding: 0.1875rem 0.4375rem;
+  padding: 0.2rem 0.5rem;
   color: var(--color-accent-ink);
   background: var(--color-accent-soft);
   border-radius: 0.375rem;
-  font-size: 0.5rem;
+  font-size: 0.65rem;
 }
-.completed .task-tag { color: var(--color-text-tag); background: var(--color-primary-faint); }
-.task-actions { margin-top: 0.875rem; display: flex; gap: 0.625rem; }
+.completed .task-tag {
+  color: var(--color-text-tag);
+  background: var(--color-primary-faint);
+}
+.task-actions {
+  margin-top: 0.875rem;
+  display: flex;
+  gap: 0.625rem;
+}
 .task-actions button {
   min-height: 2.8125rem;
   display: flex;
@@ -180,7 +243,16 @@ const emit = defineEmits<{
   border-radius: 1.125rem;
   text-align: center;
 }
-.empty-state .app-icon { margin: 0 auto 0.625rem; color: var(--color-primary); }
-.empty-state h3 { color: var(--color-text); font-size: 0.9375rem; }
-.empty-state p { margin-top: 0.3125rem; font-size: 0.6875rem; }
+.empty-state .app-icon {
+  margin: 0 auto 0.625rem;
+  color: var(--color-primary);
+}
+.empty-state h3 {
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+.empty-state p {
+  margin-top: 0.3125rem;
+  font-size: 0.6875rem;
+}
 </style>

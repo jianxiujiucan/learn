@@ -38,6 +38,7 @@ try {
   await page.getByRole('button', { name: '注册并开始打卡' }).click();
   await page.locator('.task-row').first().waitFor();
   assert.equal(await page.locator('.task-row').count(), 7, '新用户应有 7 项默认任务');
+  assert.ok(await page.locator('.today-button').evaluate((element) => element.classList.contains('selected')));
 
   const heroColors = await page.locator('.hero-card').evaluate((element) =>
     getComputedStyle(element).backgroundImage,
@@ -63,26 +64,18 @@ try {
   await page.getByRole('button', { name: '安排任务', exact: true }).click();
   assert.equal(await page.locator('.selection-row').count(), 8, '任务库应包含新增任务');
   assert.equal(
-    await page.locator('#arrange-add-submit').evaluate((element) => getComputedStyle(element).backgroundColor),
-    'rgb(166, 228, 136)',
-    '新增按钮应应用主题浅绿色',
-  );
-  assert.equal(
     await page.locator('.icon-action').first().evaluate((element) => getComputedStyle(element).display),
     'grid',
     '编辑按钮应应用组件样式',
   );
-  await page.locator('#arrange-new-task').fill('整理房间');
-  await page.locator('#arrange-add-submit').click();
-  await page.waitForFunction(() => document.querySelectorAll('.selection-row').length === 9);
-  await page.getByRole('button', { name: '修改任务 整理房间', exact: true }).click();
-  await page.locator('.edit-input').fill('整理书桌');
+  await page.getByRole('button', { name: '修改任务 阅读 20 分钟', exact: true }).click();
+  await page.locator('.edit-input').fill('阅读 30 分钟');
   await page.getByRole('button', { name: '保存修改', exact: true }).click();
-  await page.getByText('整理书桌', { exact: true }).waitFor();
-  await page.getByRole('button', { name: '删除任务 整理书桌', exact: true }).click();
-  await page.getByText('删除“整理书桌”？', { exact: true }).waitFor();
-  await page.getByRole('button', { name: '删除', exact: true }).click();
-  await page.waitForFunction(() => document.querySelectorAll('.selection-row').length === 8);
+  await page.getByRole('dialog', { name: '安排当日任务' }).getByText('阅读 30 分钟', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '删除任务 阅读 30 分钟', exact: true }).click();
+  await page.getByText('删除“阅读 30 分钟”？', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '确认删除任务', exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.selection-row').length === 7);
   await page.screenshot({ path: path.join(artifacts, 'arrange-modal.png'), fullPage: true });
   await page.getByRole('button', { name: '全选' }).click();
   await page.getByRole('button', { name: /保存安排/ }).click();
@@ -90,7 +83,7 @@ try {
 
   await page.reload({ waitUntil: 'networkidle' });
   await page.locator('.task-row').first().waitFor();
-  assert.equal(await page.locator('.task-row').count(), 8, '刷新后任务安排应保留');
+  assert.equal(await page.locator('.task-row').count(), 7, '刷新后任务安排应保留');
   assert.ok(
     await page.locator('.task-row').first().evaluate((element) => element.classList.contains('completed')),
     '刷新后完成状态应保留',
@@ -102,10 +95,11 @@ try {
   await page.locator('#auth-password').fill(password);
   await page.getByRole('button', { name: '登录并开始打卡' }).click();
   await page.locator('.task-row').first().waitFor();
-  assert.equal(await page.locator('.task-row').count(), 8, '重新登录后记录应恢复');
+  assert.equal(await page.locator('.task-row').count(), 7, '重新登录后记录应恢复');
 
   await page.locator('.day-number', { hasText: /^15$/ }).first().click();
   await page.waitForFunction(() => document.querySelector('.hero-date')?.textContent?.includes('10月15日'));
+  assert.equal(await page.locator('.today-button').evaluate((element) => element.classList.contains('selected')), false);
   await page.getByRole('button', { name: '安排任务', exact: true }).click();
   await page.locator('.task-select').nth(0).click();
   await page.locator('.task-select').nth(1).click();
@@ -114,7 +108,8 @@ try {
   await page.locator('.task-row').first().locator('.custom-check').click();
   await page.waitForFunction(() => document.querySelector('.task-count')?.textContent?.includes('1 / 2'));
   await page.getByRole('button', { name: '今天', exact: true }).click();
-  await page.waitForFunction(() => document.querySelectorAll('.task-row').length === 8);
+  await page.waitForFunction(() => document.querySelectorAll('.task-row').length === 7);
+  assert.ok(await page.locator('.today-button').evaluate((element) => element.classList.contains('selected')));
   await page.locator('.day-number', { hasText: /^15$/ }).first().click();
   await page.waitForFunction(() => document.querySelectorAll('.task-row').length === 2);
   assert.ok(
@@ -122,7 +117,7 @@ try {
     '返回历史日期后应恢复当日完成状态',
   );
   await page.getByRole('button', { name: '今天', exact: true }).click();
-  await page.waitForFunction(() => document.querySelectorAll('.task-row').length === 8);
+  await page.waitForFunction(() => document.querySelectorAll('.task-row').length === 7);
   await page.screenshot({ path: path.join(artifacts, 'checkin.png'), fullPage: true });
 
   await page.setViewportSize({ width: 360, height: 780 });
