@@ -75,10 +75,20 @@ const emit = defineEmits<{
     </div>
 
     <div class="task-actions">
-      <button class="secondary-action" type="button" @click="emit('arrange')">
+      <button
+        class="secondary-action"
+        type="button"
+        :disabled="loading"
+        @click="emit('arrange')"
+      >
         <AppIcon name="list" :size="17" />安排任务
       </button>
-      <button class="primary-action" type="button" @click="emit('add')">
+      <button
+        class="primary-action"
+        type="button"
+        :disabled="loading"
+        @click="emit('add')"
+      >
         <AppIcon name="plus" :size="17" />新增任务
       </button>
     </div>

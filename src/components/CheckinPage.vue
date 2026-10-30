@@ -35,7 +35,10 @@ const userInitial = computed(() =>
   props.user.username.trim().charAt(0).toUpperCase()
 );
 const selectedTaskIds = computed(
-  () => day.value?.tasks.map((task) => task.id) || []
+  () =>
+    day.value?.date === selectedDate.value
+      ? day.value.tasks.map((task) => task.id)
+      : [],
 );
 const isTodaySelected = computed(() => selectedDate.value === todayKey());
 
