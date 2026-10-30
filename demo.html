@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#ddedf0" />
+    <meta
+      name="description"
+      content="个人每日学习任务打卡原型，支持日历切换、任务安排、新增任务和完成记录。"
+    />
+    <title>成长打卡｜每日学习任务</title>
+    <style>
+      :root {
+        /* 基础色板 */
+        --p-mint-100: oklch(0.935 0.025 200);
+        --p-mint-300: oklch(0.855 0.038 202);
+        --p-paper: oklch(0.985 0.006 190);
+        --p-ink-900: oklch(0.225 0.014 30);
+        --p-ink-600: oklch(0.43 0.025 205);
+        --p-lime-300: oklch(0.96 0.16 116);
+        --p-danger: oklch(0.5 0.17 28);
+        /* 语义色 */
+        --surface-page: var(--p-mint-100);
+        --surface-raised: var(--p-paper);
+        --surface-selected: var(--p-lime-300);
+        --text-primary: var(--p-ink-900);
+        --text-secondary: var(--p-ink-600);
+        --border-soft: oklch(0.86 0.018 200);
+        --focus: var(--p-ink-900);
+        /* 组件色 */
+        --button-primary-bg: var(--surface-selected);
+        --button-primary-text: var(--text-primary);
+        --calendar-bg: var(--surface-raised);
+        --task-bg: var(--surface-raised);
+        --radius-lg: 20px;
+        --radius-md: 12px;
+        --shadow-soft: 0 12px 32px oklch(0.35 0.025 205 / 0.07);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        min-width: 320px;
+        background: var(--p-mint-300);
+      }
+      body {
+        min-height: 100dvh;
+        color: var(--text-primary);
+        background: var(--p-mint-300);
+        font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        color: inherit;
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+      button,
+      a,
+      input {
+        touch-action: manipulation;
+      }
+      :focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      .svg-icon {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 480px;
+        min-height: 100dvh;
+        margin: 0 auto;
+        padding: max(20px, env(safe-area-inset-top)) 16px
+          max(32px, env(safe-area-inset-bottom));
+        background: var(--surface-page);
+      }
+      .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+      }
+      .brand h1 {
+        font-size: 21px;
+        line-height: 1.25;
+        letter-spacing: 0.02em;
+        font-weight: 750;
+      }
+      .brand p {
+        margin-top: 2px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .today-button {
+        min-width: 58px;
+        min-height: 44px;
+        padding: 8px 14px;
+        border: 1px solid oklch(0.72 0.025 205);
+        border-radius: 999px;
+        background: transparent;
+        font-size: 14px;
+        font-weight: 650;
+        transition: transform 160ms ease-out, background-color 160ms ease-out;
+      }
+      .today-button:hover {
+        background: oklch(0.9 0.025 200);
+      }
+      .today-button:active {
+        transform: scale(0.96);
+      }
+
+      .overview {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 30px 4px 22px;
+      }
+      .overline {
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+      }
+      .overview h2 {
+        margin-top: 4px;
+        font-size: clamp(26px, 8vw, 34px);
+        line-height: 1.2;
+        letter-spacing: -0.04em;
+        font-weight: 760;
+      }
+      .overview h2 span {
+        margin-left: 6px;
+        font-size: 15px;
+        letter-spacing: 0;
+        font-weight: 550;
+        color: var(--text-secondary);
+      }
+      .progress-number {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .progress-number strong {
+        display: block;
+        font-size: 26px;
+        line-height: 1.2;
+        font-variant-numeric: tabular-nums;
+      }
+      .progress-number small {
+        color: var(--text-secondary);
+        font-size: 12px;
+      }
+
+      .calendar-panel {
+        padding: 16px 12px 14px;
+        border-radius: var(--radius-lg);
+        background: var(--calendar-bg);
+        box-shadow: var(--shadow-soft);
+      }
+      .calendar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 0 2px 12px;
+      }
+      .calendar-header h3 {
+        font-size: 17px;
+        line-height: 1.4;
+        font-weight: 720;
+        font-variant-numeric: tabular-nums;
+      }
+      .month-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+      }
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        transition: transform 160ms ease-out, background-color 160ms ease-out;
+      }
+      .icon-button:hover {
+        background: var(--surface-page);
+      }
+      .icon-button:active {
+        transform: scale(0.92);
+      }
+      .weekdays,
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+      .weekdays {
+        padding: 0 0 6px;
+        color: var(--text-secondary);
+        font-size: 12px;
+        text-align: center;
+      }
+      .weekdays span {
+        padding: 4px 0;
+      }
+      .calendar-grid {
+        row-gap: 4px;
+      }
+      .day-cell {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        min-width: 0;
+        min-height: 46px;
+      }
+      .day-button {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        font-size: 15px;
+        font-weight: 570;
+        font-variant-numeric: tabular-nums;
+        transition: transform 160ms ease-out, background-color 160ms ease-out;
+      }
+      .day-button:hover {
+        background: var(--surface-page);
+      }
+      .day-button:active {
+        transform: scale(0.9);
+      }
+      .day-button.is-today:not(.is-selected) {
+        box-shadow: inset 0 0 0 1.5px var(--text-primary);
+      }
+      .day-button.is-selected {
+        background: var(--surface-selected);
+        font-weight: 760;
+      }
+      .day-button.is-selected:hover {
+        background: var(--surface-selected);
+      }
+      .day-status {
+        position: absolute;
+        left: 50%;
+        bottom: 4px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--text-secondary);
+        transform: translateX(-50%);
+      }
+      .day-button.is-complete .day-status {
+        width: 12px;
+        height: 6px;
+        bottom: 3px;
+        border-radius: 0;
+        background: transparent;
+        border-left: 1.8px solid currentColor;
+        border-bottom: 1.8px solid currentColor;
+        transform: translateX(-50%) rotate(-45deg);
+      }
+
+      .task-section {
+        margin-top: 28px;
+      }
+      .task-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 0 4px 14px;
+      }
+      .task-heading h3 {
+        font-size: 20px;
+        line-height: 1.35;
+        font-weight: 740;
+      }
+      .task-heading p {
+        margin-top: 3px;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+      .task-total {
+        color: var(--text-secondary);
+        font-size: 13px;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+      .progress-track {
+        height: 6px;
+        margin: 0 4px 18px;
+        overflow: hidden;
+        border-radius: 99px;
+        background: oklch(0.83 0.022 200);
+      }
+      .progress-fill {
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--text-primary);
+        transition: width 240ms ease-out;
+      }
+      .task-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        min-height: 48px;
+        padding: 10px 14px;
+        border-radius: var(--radius-md);
+        font-size: 15px;
+        font-weight: 680;
+        transition: transform 160ms ease-out, background-color 160ms ease-out;
+      }
+      .action-button:active {
+        transform: scale(0.97);
+      }
+      .action-button.secondary {
+        border: 1px solid oklch(0.7 0.025 205);
+        background: transparent;
+      }
+      .action-button.secondary:hover {
+        background: oklch(0.9 0.025 200);
+      }
+      .action-button.primary {
+        border: 1px solid var(--button-primary-bg);
+        background: var(--button-primary-bg);
+        color: var(--button-primary-text);
+      }
+      .action-button.primary:hover {
+        background: oklch(0.92 0.14 116);
+      }
+
+      .task-sheet {
+        overflow: hidden;
+        border-radius: var(--radius-lg);
+        background: var(--task-bg);
+        box-shadow: var(--shadow-soft);
+      }
+      .task-row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-height: 62px;
+        padding: 8px 18px;
+        cursor: pointer;
+      }
+      .task-row + .task-row {
+        border-top: 1px solid var(--border-soft);
+      }
+      .task-row:hover {
+        background: oklch(0.96 0.014 195);
+      }
+      .task-row input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+      }
+      .custom-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        width: 26px;
+        height: 26px;
+        margin-right: 14px;
+        border: 1.6px solid oklch(0.58 0.025 205);
+        border-radius: 8px;
+        background: transparent;
+        transition: transform 160ms ease-out, background-color 160ms ease-out,
+          border-color 160ms ease-out;
+      }
+      .custom-check .svg-icon {
+        width: 17px;
+        height: 17px;
+        opacity: 0;
+        transform: scale(0.65);
+        transition: transform 160ms ease-out, opacity 160ms ease-out;
+      }
+      .task-row input:checked + .custom-check {
+        border-color: var(--text-primary);
+        background: var(--text-primary);
+        color: var(--surface-raised);
+      }
+      .task-row input:checked + .custom-check .svg-icon {
+        opacity: 1;
+        transform: scale(1);
+      }
+      .task-row input:focus-visible + .custom-check {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+      .task-name {
+        min-width: 0;
+        font-size: 16px;
+        font-weight: 570;
+        overflow-wrap: anywhere;
+        transition: opacity 160ms ease-out;
+      }
+      .task-row input:checked ~ .task-name {
+        color: var(--text-secondary);
+        text-decoration: line-through;
+        text-decoration-thickness: 1.5px;
+      }
+      .task-row:active .custom-check {
+        transform: scale(0.9);
+      }
+      .empty-state {
+        padding: 32px 22px 34px;
+        text-align: center;
+      }
+      .empty-state .svg-icon {
+        width: 38px;
+        height: 38px;
+        margin: 0 auto 12px;
+        color: var(--text-secondary);
+      }
+      .empty-state h4 {
+        font-size: 17px;
+        font-weight: 700;
+      }
+      .empty-state p {
+        max-width: 30ch;
+        margin: 6px auto 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+      .completion-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 14px 6px 0;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .completion-note .svg-icon {
+        color: var(--text-primary);
+      }
+      .storage-note {
+        margin: 22px 0 0;
+        color: var(--text-secondary);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-top: 32px;
+        background: oklch(0.18 0.015 205 / 0.42);
+      }
+      .sheet {
+        width: 100%;
+        max-width: 480px;
+        max-height: 86dvh;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 12px 20px max(24px, env(safe-area-inset-bottom));
+        border-radius: 24px 24px 0 0;
+        background: var(--surface-raised);
+        box-shadow: 0 -16px 40px oklch(0.2 0.02 205 / 0.14);
+      }
+      .sheet-handle {
+        width: 40px;
+        height: 4px;
+        margin: 0 auto 12px;
+        border-radius: 99px;
+        background: var(--border-soft);
+      }
+      .sheet-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+      }
+      .sheet-header h2 {
+        font-size: 21px;
+        line-height: 1.35;
+        font-weight: 740;
+      }
+      .sheet-header p {
+        margin-top: 3px;
+        color: var(--text-secondary);
+        font-size: 13px;
+      }
+      .sheet-close {
+        flex: 0 0 auto;
+        margin-right: -10px;
+      }
+      .selection-list {
+        border-top: 1px solid var(--border-soft);
+      }
+      .selection-row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-height: 54px;
+        border-bottom: 1px solid var(--border-soft);
+        cursor: pointer;
+      }
+      .selection-row input {
+        width: 22px;
+        height: 22px;
+        margin-right: 13px;
+        accent-color: var(--text-primary);
+        cursor: pointer;
+      }
+      .selection-row span {
+        font-size: 16px;
+        overflow-wrap: anywhere;
+      }
+      .sheet-submit {
+        width: 100%;
+        margin-top: 20px;
+      }
+      .field-label {
+        display: block;
+        margin: 18px 0 8px;
+        font-size: 14px;
+        font-weight: 650;
+      }
+      .text-input {
+        width: 100%;
+        min-height: 50px;
+        padding: 11px 14px;
+        border: 1.5px solid oklch(0.7 0.025 205);
+        border-radius: var(--radius-md);
+        background: var(--surface-page);
+        color: var(--text-primary);
+        font-size: 16px;
+      }
+      .text-input::placeholder {
+        color: var(--text-secondary);
+      }
+      .field-help {
+        margin-top: 7px;
+        color: var(--text-secondary);
+        font-size: 12px;
+      }
+      .field-error {
+        min-height: 22px;
+        margin-top: 5px;
+        color: var(--p-danger);
+        font-size: 13px;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: max(24px, env(safe-area-inset-bottom));
+        z-index: 70;
+        max-width: calc(100% - 40px);
+        padding: 11px 18px;
+        border-radius: 999px;
+        background: var(--text-primary);
+        color: var(--surface-raised);
+        box-shadow: var(--shadow-soft);
+        font-size: 14px;
+        text-align: center;
+        transform: translateX(-50%);
+      }
+
+      @media (min-width: 600px) {
+        .app {
+          margin: 24px auto;
+          min-height: calc(100dvh - 48px);
+          border-radius: 28px;
+          padding: 26px 22px 32px;
+          box-shadow: 0 20px 60px oklch(0.28 0.025 205 / 0.12);
+        }
+        .modal-overlay {
+          align-items: center;
+          padding: 24px;
+        }
+        .sheet {
+          border-radius: 24px;
+          padding: 16px 24px 24px;
+        }
+      }
+      @media (max-width: 350px) {
+        .app {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+        .calendar-panel {
+          padding-left: 7px;
+          padding-right: 7px;
+        }
+        .brand p {
+          display: none;
+        }
+        .overview {
+          margin-top: 24px;
+        }
+        .task-actions {
+          gap: 8px;
+        }
+        .action-button {
+          padding-left: 8px;
+          padding-right: 8px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app" id="app">
+      <header class="app-header">
+        <div class="brand">
+          <svg
+            class="svg-icon brand-mark"
+            viewBox="0 0 28 28"
+            aria-hidden="true"
+          >
+            <path d="M5 4.5h18v19H5z"></path>
+            <path d="M9 2.5v4M19 2.5v4M5 10h18"></path>
+            <path d="m9.5 16 3 3 6-6"></path>
+          </svg>
+          <div>
+            <h1>成长打卡</h1>
+            <p>每天完成一点点</p>
+          </div>
+        </div>
+        <button class="today-button" id="todayButton" type="button">
+          今天
+        </button>
+      </header>
+
+      <section class="overview" aria-labelledby="selectedDateTitle">
+        <div>
+          <p class="overline" id="dateOverline">每日学习任务</p>
+          <h2 id="selectedDateTitle">日期<span id="weekdayText"></span></h2>
+        </div>
+        <div class="progress-number" aria-live="polite">
+          <strong id="progressNumber">0/0</strong><small>已完成</small>
+        </div>
+      </section>
+
+      <section class="calendar-panel" aria-labelledby="calendarTitle">
+        <div class="calendar-header">
+          <h3 id="calendarTitle"></h3>
+          <div class="month-actions">
+            <button
+              class="icon-button"
+              id="prevMonth"
+              type="button"
+              aria-label="上个月"
+            >
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m15 18-6-6 6-6"></path>
+              </svg>
+            </button>
+            <button
+              class="icon-button"
+              id="nextMonth"
+              type="button"
+              aria-label="下个月"
+            >
+              <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 18 6-6-6-6"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="weekdays" aria-hidden="true">
+          <span>一</span><span>二</span><span>三</span><span>四</span
+          ><span>五</span><span>六</span><span>日</span>
+        </div>
+        <div
+          class="calendar-grid"
+          id="calendarGrid"
+          role="group"
+          aria-label="选择日期"
+        ></div>
+      </section>
+
+      <section class="task-section" aria-labelledby="taskSectionTitle">
+        <div class="task-heading">
+          <div>
+            <h3 id="taskSectionTitle">当日任务</h3>
+            <p id="taskHint">完成后记得勾选</p>
+          </div>
+          <span class="task-total" id="taskTotal"></span>
+        </div>
+        <div
+          class="progress-track"
+          role="progressbar"
+          id="progressTrack"
+          aria-label="任务完成进度"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="task-actions">
+          <button
+            class="action-button secondary"
+            id="manageTasksButton"
+            type="button"
+          >
+            <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h10"></path></svg
+            >安排任务
+          </button>
+          <button
+            class="action-button primary"
+            id="addTaskButton"
+            type="button"
+          >
+            <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"></path></svg
+            >新增任务
+          </button>
+        </div>
+        <div class="task-sheet" id="taskSheet">
+          <div id="taskList"></div>
+        </div>
+        <p class="completion-note" id="completionNote" hidden>
+          <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="m8 12 2.5 2.5L16 9"></path>
+          </svg>
+          当日任务全部完成，真棒！
+        </p>
+      </section>
+      <p class="storage-note">原型记录仅保存在当前浏览器，不会跨设备同步</p>
+    </main>
+
+    <div class="modal-overlay" id="manageModal" hidden>
+      <section
+        class="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="manageTitle"
+      >
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-header">
+          <div>
+            <h2 id="manageTitle">安排当日任务</h2>
+            <p id="manageDateText">选择需要完成的事项</p>
+          </div>
+          <button
+            class="icon-button sheet-close"
+            type="button"
+            data-close-modal
+            aria-label="关闭安排任务"
+          >
+            <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <form id="manageForm">
+          <div class="selection-list" id="selectionList"></div>
+          <button class="action-button primary sheet-submit" type="submit">
+            保存安排
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <div class="modal-overlay" id="addModal" hidden>
+      <section
+        class="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="addTitle"
+      >
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="sheet-header">
+          <div>
+            <h2 id="addTitle">新增任务</h2>
+            <p>新任务会加入任务库，并安排到当前日期</p>
+          </div>
+          <button
+            class="icon-button sheet-close"
+            type="button"
+            data-close-modal
+            aria-label="关闭新增任务"
+          >
+            <svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 6 12 12M18 6 6 18"></path>
+            </svg>
+          </button>
+        </div>
+        <form id="addForm" novalidate>
+          <label class="field-label" for="taskNameInput">任务名称</label>
+          <input
+            class="text-input"
+            id="taskNameInput"
+            name="taskName"
+            type="text"
+            maxlength="20"
+            autocomplete="off"
+            placeholder="例如：阅读 20 分钟"
+            aria-describedby="taskNameHelp taskNameError"
+            required
+          />
+          <p class="field-help" id="taskNameHelp">最多输入 20 个字</p>
+          <p class="field-error" id="taskNameError" role="alert"></p>
+          <button class="action-button primary sheet-submit" type="submit">
+            添加并安排
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+    <script>
+      const CHECK_ICON =
+        '<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>';
+      const EMPTY_ICON =
+        '<svg class="svg-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 3h3v15H4V7h3z"></path><path d="M9 13h6M9 17h4"></path></svg>';
+      const STORAGE_KEY = "growth-checkin-prototype-v1";
+      const DEFAULT_NAMES = [
+        "语文作业",
+        "英语校内作业",
+        "英语校外作业",
+        "数学作业",
+        "吃药",
+        "收拾书包",
+        "收拾玩具",
+      ];
+      const makeId = () =>
+        window.crypto && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `task-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const pad = (value) => String(value).padStart(2, "0");
+      const dateKey = (date) =>
+        `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+          date.getDate()
+        )}`;
+      const fromKey = (key) => {
+        const [y, m, d] = key.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      };
+      const startOfToday = () => {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      };
+      const escapeHTML = (value) =>
+        String(value).replace(
+          /[&<>'"]/g,
+          (char) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              "'": "&#39;",
+              '"': "&quot;",
+            }[char])
+        );
+      const defaultCatalog = () =>
+        DEFAULT_NAMES.map((name) => ({ id: makeId(), name }));
+      const isSameDate = (a, b) => dateKey(a) === dateKey(b);
+
+      let selectedDate = startOfToday();
+      let viewYear = selectedDate.getFullYear();
+      let viewMonth = selectedDate.getMonth();
+      let lastFocusedElement = null;
+      let toastTimer = null;
+
+      function initialState() {
+        const catalog = defaultCatalog();
+        return {
+          catalog,
+          days: {
+            [dateKey(selectedDate)]: {
+              taskIds: catalog.map((task) => task.id),
+              completed: [],
+            },
+          },
+        };
+      }
+
+      function loadState() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          if (
+            !saved ||
+            !Array.isArray(saved.catalog) ||
+            !saved.days ||
+            typeof saved.days !== "object"
+          )
+            return initialState();
+          const catalog = saved.catalog.filter(
+            (task) =>
+              task &&
+              typeof task.id === "string" &&
+              typeof task.name === "string"
+          );
+          return catalog.length
+            ? { catalog, days: saved.days }
+            : initialState();
+        } catch (error) {
+          return initialState();
+        }
+      }
+
+      let state = loadState();
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          /* 原型在存储不可用时仍可使用当前会话 */
+        }
+      }
+
+      const elements = {
+        calendarTitle: document.getElementById("calendarTitle"),
+        calendarGrid: document.getElementById("calendarGrid"),
+        selectedDateTitle: document.getElementById("selectedDateTitle"),
+        weekdayText: document.getElementById("weekdayText"),
+        dateOverline: document.getElementById("dateOverline"),
+        progressNumber: document.getElementById("progressNumber"),
+        progressFill: document.getElementById("progressFill"),
+        progressTrack: document.getElementById("progressTrack"),
+        taskTotal: document.getElementById("taskTotal"),
+        taskHint: document.getElementById("taskHint"),
+        taskList: document.getElementById("taskList"),
+        completionNote: document.getElementById("completionNote"),
+        manageModal: document.getElementById("manageModal"),
+        addModal: document.getElementById("addModal"),
+        selectionList: document.getElementById("selectionList"),
+        manageDateText: document.getElementById("manageDateText"),
+        addForm: document.getElementById("addForm"),
+        taskNameInput: document.getElementById("taskNameInput"),
+        taskNameError: document.getElementById("taskNameError"),
+        toast: document.getElementById("toast"),
+      };
+
+      function dayRecord(key = dateKey(selectedDate)) {
+        const record = state.days[key];
+        if (!record || !Array.isArray(record.taskIds))
+          return { taskIds: [], completed: [] };
+        return {
+          taskIds: record.taskIds,
+          completed: Array.isArray(record.completed) ? record.completed : [],
+        };
+      }
+
+      function renderCalendar() {
+        elements.calendarTitle.textContent = `${viewYear}年 ${viewMonth + 1}月`;
+        const firstDay = new Date(viewYear, viewMonth, 1);
+        const leadingBlanks = (firstDay.getDay() + 6) % 7;
+        const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+        let html = "";
+        for (let i = 0; i < leadingBlanks; i++)
+          html += '<div class="day-cell" aria-hidden="true"></div>';
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(viewYear, viewMonth, day);
+          const key = dateKey(date);
+          const record = dayRecord(key);
+          const total = record.taskIds.length;
+          const completed = record.completed.filter((id) =>
+            record.taskIds.includes(id)
+          ).length;
+          const selected = isSameDate(date, selectedDate);
+          const today = isSameDate(date, startOfToday());
+          const classes = [
+            "day-button",
+            selected ? "is-selected" : "",
+            today ? "is-today" : "",
+            total > 0 && completed === total ? "is-complete" : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
+          const statusText = total
+            ? `，已安排${total}项任务，完成${completed}项`
+            : "，未安排任务";
+          html += `<div class="day-cell"><button type="button" class="${classes}" data-date="${key}" aria-pressed="${selected}" aria-label="${
+            viewMonth + 1
+          }月${day}日${statusText}"><span>${day}</span>${
+            total ? '<i class="day-status" aria-hidden="true"></i>' : ""
+          }</button></div>`;
+        }
+        elements.calendarGrid.innerHTML = html;
+      }
+
+      function renderTasks() {
+        const record = dayRecord();
+        const tasks = record.taskIds
+          .map((id) => state.catalog.find((task) => task.id === id))
+          .filter(Boolean);
+        const completed = tasks.filter((task) =>
+          record.completed.includes(task.id)
+        ).length;
+        const total = tasks.length;
+        const percent = total ? Math.round((completed / total) * 100) : 0;
+        const today = isSameDate(selectedDate, startOfToday());
+        const dateLabel = `${
+          selectedDate.getMonth() + 1
+        }月${selectedDate.getDate()}日`;
+        const weekday = new Intl.DateTimeFormat("zh-CN", {
+          weekday: "long",
+        }).format(selectedDate);
+
+        elements.dateOverline.textContent = today ? "今天" : "所选日期";
+        elements.selectedDateTitle.childNodes[0].textContent = dateLabel;
+        elements.weekdayText.textContent = weekday;
+        elements.progressNumber.textContent = `${completed}/${total}`;
+        elements.progressFill.style.width = `${percent}%`;
+        elements.progressTrack.setAttribute("aria-valuenow", String(percent));
+        elements.progressTrack.setAttribute(
+          "aria-valuetext",
+          `共${total}项，已完成${completed}项`
+        );
+        elements.taskTotal.textContent = total ? `${percent}%` : "";
+        elements.taskHint.textContent = total
+          ? completed === total
+            ? "今天的计划已全部达成"
+            : "完成后记得勾选"
+          : "先安排今天要完成的事项";
+        elements.completionNote.hidden = !(total > 0 && completed === total);
+
+        if (!total) {
+          elements.taskList.innerHTML = `<div class="empty-state">${EMPTY_ICON}<h4>这一天还没有任务</h4><p>点击“安排任务”选择事项，或新增一个专属任务。</p></div>`;
+          return;
+        }
+        elements.taskList.innerHTML = tasks
+          .map((task) => {
+            const checked = record.completed.includes(task.id);
+            return `<label class="task-row"><input type="checkbox" data-task-id="${escapeHTML(
+              task.id
+            )}" ${checked ? "checked" : ""} aria-label="完成${escapeHTML(
+              task.name
+            )}"><span class="custom-check">${CHECK_ICON}</span><span class="task-name">${escapeHTML(
+              task.name
+            )}</span></label>`;
+          })
+          .join("");
+      }
+
+      function render() {
+        renderCalendar();
+        renderTasks();
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        elements.toast.textContent = message;
+        elements.toast.hidden = false;
+        toastTimer = setTimeout(() => {
+          elements.toast.hidden = true;
+        }, 2200);
+      }
+
+      function openModal(modal) {
+        lastFocusedElement = document.activeElement;
+        modal.hidden = false;
+        document.body.style.overflow = "hidden";
+        const target =
+          modal === elements.addModal
+            ? elements.taskNameInput
+            : modal.querySelector("input, button");
+        requestAnimationFrame(() => target && target.focus());
+      }
+
+      function closeModal(modal) {
+        modal.hidden = true;
+        document.body.style.overflow = "";
+        if (modal === elements.addModal) {
+          elements.addForm.reset();
+          elements.taskNameError.textContent = "";
+        }
+        if (lastFocusedElement) lastFocusedElement.focus();
+      }
+
+      function openManageModal() {
+        const selectedIds = dayRecord().taskIds;
+        elements.manageDateText.textContent = `${
+          selectedDate.getMonth() + 1
+        }月${selectedDate.getDate()}日 · 选择需要完成的事项`;
+        elements.selectionList.innerHTML = state.catalog
+          .map(
+            (task) =>
+              `<label class="selection-row"><input type="checkbox" name="taskIds" value="${escapeHTML(
+                task.id
+              )}" ${
+                selectedIds.includes(task.id) ? "checked" : ""
+              }><span>${escapeHTML(task.name)}</span></label>`
+          )
+          .join("");
+        openModal(elements.manageModal);
+      }
+
+      document.getElementById("todayButton").addEventListener("click", () => {
+        selectedDate = startOfToday();
+        viewYear = selectedDate.getFullYear();
+        viewMonth = selectedDate.getMonth();
+        render();
+      });
+      document.getElementById("prevMonth").addEventListener("click", () => {
+        viewMonth--;
+        if (viewMonth < 0) {
+          viewMonth = 11;
+          viewYear--;
+        }
+        renderCalendar();
+      });
+      document.getElementById("nextMonth").addEventListener("click", () => {
+        viewMonth++;
+        if (viewMonth > 11) {
+          viewMonth = 0;
+          viewYear++;
+        }
+        renderCalendar();
+      });
+      elements.calendarGrid.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-date]");
+        if (!button) return;
+        selectedDate = fromKey(button.dataset.date);
+        render();
+      });
+      elements.taskList.addEventListener("change", (event) => {
+        const input = event.target.closest("[data-task-id]");
+        if (!input) return;
+        const key = dateKey(selectedDate);
+        const record = dayRecord(key);
+        const wasComplete =
+          record.taskIds.length > 0 &&
+          record.completed.length === record.taskIds.length;
+        record.completed = input.checked
+          ? [...new Set([...record.completed, input.dataset.taskId])]
+          : record.completed.filter((id) => id !== input.dataset.taskId);
+        state.days[key] = record;
+        saveState();
+        render();
+        const isComplete =
+          record.taskIds.length > 0 &&
+          record.completed.length === record.taskIds.length;
+        if (!wasComplete && isComplete) showToast("当日任务全部完成，真棒！");
+      });
+
+      document
+        .getElementById("manageTasksButton")
+        .addEventListener("click", openManageModal);
+      document
+        .getElementById("addTaskButton")
+        .addEventListener("click", () => openModal(elements.addModal));
+      document
+        .getElementById("manageForm")
+        .addEventListener("submit", (event) => {
+          event.preventDefault();
+          const key = dateKey(selectedDate);
+          const previous = dayRecord(key);
+          const selectedIds = new FormData(event.currentTarget).getAll(
+            "taskIds"
+          );
+          state.days[key] = {
+            taskIds: selectedIds,
+            completed: previous.completed.filter((id) =>
+              selectedIds.includes(id)
+            ),
+          };
+          saveState();
+          closeModal(elements.manageModal);
+          render();
+          showToast(`已安排 ${selectedIds.length} 项任务`);
+        });
+      elements.addForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const name = elements.taskNameInput.value.trim();
+        if (!name) {
+          elements.taskNameError.textContent = "请输入任务名称";
+          elements.taskNameInput.focus();
+          return;
+        }
+        if (state.catalog.some((task) => task.name === name)) {
+          elements.taskNameError.textContent = "任务库中已有同名任务";
+          elements.taskNameInput.focus();
+          return;
+        }
+        const task = { id: makeId(), name };
+        const key = dateKey(selectedDate);
+        const record = dayRecord(key);
+        state.catalog.push(task);
+        record.taskIds.push(task.id);
+        state.days[key] = record;
+        saveState();
+        closeModal(elements.addModal);
+        render();
+        showToast(`已添加“${name}”`);
+      });
+      elements.taskNameInput.addEventListener("input", () => {
+        elements.taskNameError.textContent = "";
+      });
+
+      document.querySelectorAll(".modal-overlay").forEach((modal) => {
+        modal.addEventListener("click", (event) => {
+          if (
+            event.target === modal ||
+            event.target.closest("[data-close-modal]")
+          )
+            closeModal(modal);
+        });
+        modal.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeModal(modal);
+            return;
+          }
+          if (event.key !== "Tab") return;
+          const focusable = [
+            ...modal.querySelectorAll(
+              "button:not([disabled]), input:not([disabled])"
+            ),
+          ].filter((item) => item.offsetParent !== null);
+          if (!focusable.length) return;
+          const first = focusable[0],
+            last = focusable[focusable.length - 1];
+          if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+          }
+        });
+      });
+
+      render();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>成长打卡 · 清新绿色</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; background: #e7eee8; }
+      body {
+        font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: #183b2c;
+        -webkit-font-smoothing: antialiased;
+      }
+      .screen {
+        position: relative;
+        width: 390px;
+        height: 1320px;
+        margin: 0;
+        overflow: hidden;
+        background: #f5f8f2;
+      }
+      .orb {
+        position: absolute;
+        border-radius: 999px;
+        pointer-events: none;
+      }
+      .orb.one { width: 230px; height: 230px; right: -110px; top: -100px; background: #e2f0d8; }
+      .orb.two { width: 130px; height: 130px; left: -75px; top: 265px; background: #e8f2e3; }
+      .topbar {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        top: 24px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand { display: flex; align-items: center; gap: 11px; }
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dcebd4;
+        color: #285c42;
+      }
+      .brand-name { font-size: 18px; line-height: 24px; font-weight: 700; letter-spacing: .02em; }
+      .brand-sub { margin-top: 1px; font-size: 10px; line-height: 15px; color: #75877b; letter-spacing: .08em; }
+      .avatar {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        background: #e1ead7;
+        box-shadow: 0 3px 10px rgba(34, 73, 50, .08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .hero {
+        position: absolute;
+        left: 20px;
+        top: 94px;
+        width: 350px;
+        height: 176px;
+        padding: 23px 24px;
+        border-radius: 28px;
+        overflow: hidden;
+        background: linear-gradient(125deg, #245d42 0%, #347453 64%, #4b8861 100%);
+        box-shadow: 0 16px 30px rgba(37, 89, 60, .16);
+        color: #fff;
+      }
+      .hero::before {
+        content: "";
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        right: -65px;
+        top: -95px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 50%;
+      }
+      .hero::after {
+        content: "";
+        position: absolute;
+        width: 110px;
+        height: 110px;
+        left: -50px;
+        bottom: -75px;
+        border: 22px solid rgba(255,255,255,.035);
+        border-radius: 50%;
+      }
+      .eyebrow { font-size: 11px; line-height: 17px; color: #cfe1d2; letter-spacing: .12em; font-weight: 500; }
+      .hero-title { margin-top: 6px; font-size: 26px; line-height: 36px; font-weight: 700; letter-spacing: -.02em; }
+      .hero-sub { margin-top: 5px; font-size: 12px; line-height: 18px; color: #d5e5d7; }
+      .streak {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-top: 15px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(255,255,255,.12);
+        color: #eef6e9;
+        font-size: 10px;
+        line-height: 15px;
+        font-weight: 500;
+      }
+      .progress-wrap {
+        position: absolute;
+        right: 24px;
+        top: 28px;
+        width: 112px;
+        height: 112px;
+      }
+      .progress-ring { width: 112px; height: 112px; transform: rotate(-90deg); }
+      .progress-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .progress-number { font-size: 25px; line-height: 31px; font-weight: 700; }
+      .progress-number span { font-size: 13px; font-weight: 500; color: #d4e5d6; }
+      .progress-label { margin-top: 1px; font-size: 9px; line-height: 14px; color: #d4e5d6; letter-spacing: .1em; }
+      .leaf {
+        position: absolute;
+        right: 29px;
+        bottom: 15px;
+        opacity: .28;
+        transform: rotate(-8deg);
+      }
+      .calendar {
+        position: absolute;
+        left: 20px;
+        top: 290px;
+        width: 350px;
+        height: 345px;
+        padding: 19px 18px 16px;
+        border: 1px solid #e7ede3;
+        border-radius: 24px;
+        background: #ffffff;
+        box-shadow: 0 8px 24px rgba(46, 75, 52, .055);
+      }
+      .section-row { display: flex; align-items: center; justify-content: space-between; }
+      .calendar-title { font-size: 16px; line-height: 24px; font-weight: 700; }
+      .calendar-title span { margin-left: 5px; color: #8a998e; font-size: 11px; font-weight: 500; }
+      .month-actions { display: flex; gap: 4px; }
+      .icon-btn {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #62776a;
+        background: #f4f7f1;
+      }
+      .weekdays {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        margin-top: 14px;
+        padding: 0 1px 8px;
+        color: #9aa69d;
+        font-size: 10px;
+        line-height: 16px;
+        text-align: center;
+      }
+      .days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        row-gap: 4px;
+      }
+      .day {
+        position: relative;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #455e50;
+        font-size: 11px;
+        line-height: 18px;
+        font-weight: 500;
+      }
+      .day.muted { color: #c5cec7; }
+      .day .date {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .day.done .date { background: #eef5e8; color: #3f6c4d; font-weight: 600; }
+      .day.selected .date { background: #2f6d4c; color: #fff; box-shadow: 0 5px 10px rgba(47, 109, 76, .22); }
+      .day .dot {
+        position: absolute;
+        bottom: 1px;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #7ca16d;
+      }
+      .day.selected .dot { background: #d7e8a7; }
+      .tasks {
+        position: absolute;
+        left: 20px;
+        top: 657px;
+        width: 350px;
+      }
+      .task-title { font-size: 18px; line-height: 26px; font-weight: 700; }
+      .task-sub { margin-top: 2px; font-size: 11px; line-height: 17px; color: #8a998e; }
+      .task-count {
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #e7f0df;
+        color: #4f7557;
+        font-size: 10px;
+        line-height: 15px;
+        font-weight: 600;
+      }
+      .task-progress {
+        width: 100%;
+        height: 5px;
+        margin-top: 13px;
+        overflow: hidden;
+        border-radius: 99px;
+        background: #e1e9de;
+      }
+      .task-progress-fill { width: 57%; height: 100%; border-radius: 99px; background: #6f9d68; }
+      .task-list { margin-top: 13px; display: flex; flex-direction: column; gap: 9px; }
+      .task {
+        height: 57px;
+        padding: 0 14px;
+        border: 1px solid #e7ede3;
+        border-radius: 17px;
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 3px 10px rgba(46, 75, 52, .025);
+      }
+      .check {
+        width: 23px;
+        height: 23px;
+        flex: 0 0 auto;
+        border: 1.5px solid #bdcbbf;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+      }
+      .task.completed .check { border-color: #5d8b60; background: #5d8b60; }
+      .task-name { font-size: 13px; line-height: 20px; font-weight: 550; }
+      .task.completed .task-name { color: #93a097; text-decoration: line-through; text-decoration-thickness: 1px; }
+      .task-tag {
+        margin-left: auto;
+        padding: 3px 7px;
+        border-radius: 6px;
+        background: #f2f5ef;
+        color: #98a399;
+        font-size: 8px;
+        line-height: 12px;
+      }
+      .task:not(.completed) .task-tag { background: #edf4e7; color: #6f8b67; }
+      .actions { display: flex; gap: 10px; margin-top: 13px; }
+      .button {
+        height: 44px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .button.secondary { width: 135px; border: 1px solid #dce6d7; background: #edf3e8; color: #4d6d55; }
+      .button.primary { flex: 1; background: #2f6d4c; color: #fff; box-shadow: 0 7px 15px rgba(47, 109, 76, .14); }
+      .footer {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 18px;
+        text-align: center;
+        color: #a1aca3;
+        font-size: 9px;
+        line-height: 15px;
+        letter-spacing: .04em;
+      }
+      svg { display: block; }
+    </style>
+  </head>
+  <body>
+    <main class="screen">
+      <div class="orb one"></div>
+      <div class="orb two"></div>
+
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">
+            <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19.8 4.3C13.2 4.5 7.1 7.1 6 13.1c-.5 2.7 1.2 5.2 3.9 5.6 5.4.8 9.4-4.6 9.9-14.4Z" fill="#5D8B60"/>
+              <path d="M5 21c1.7-5.6 5.2-9.1 10.5-11.4" stroke="#285C42" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">成长打卡</div>
+            <div class="brand-sub">每天完成一点点</div>
+          </div>
+        </div>
+        <div class="avatar">
+          <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11.5" cy="8" r="3.2" fill="#799173"/>
+            <path d="M5.5 18c.7-3.1 2.8-4.7 6-4.7s5.3 1.6 6 4.7" fill="#799173"/>
+          </svg>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="eyebrow">10月28日 · 星期三</div>
+        <div class="hero-title">小步向前</div>
+        <div class="hero-sub">今天已经完成了 4 项，继续保持吧</div>
+        <div class="streak">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7.2 1.4c.4 2.4-1.8 3-1.8 4.7-1.1-.6-1.5-1.5-1.4-2.5-2 1.5-2.6 3.4-1.9 5.2.6 1.6 2 2.5 4.2 2.5 2.5 0 4-1.4 4-3.8 0-2.7-1.8-4.5-3.1-6.1Z" fill="#DCEBA9"/>
+          </svg>
+          连续打卡 12 天
+        </div>
+        <div class="progress-wrap">
+          <svg class="progress-ring" viewBox="0 0 112 112" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="56" cy="56" r="47" stroke="rgba(255,255,255,.15)" stroke-width="7" fill="none"/>
+            <circle cx="56" cy="56" r="47" stroke="#DCEBA9" stroke-width="7" stroke-linecap="round" fill="none" stroke-dasharray="295.31" stroke-dashoffset="127.18"/>
+          </svg>
+          <div class="progress-center">
+            <div class="progress-number">4<span>/7</span></div>
+            <div class="progress-label">今日完成</div>
+          </div>
+        </div>
+        <svg class="leaf" width="67" height="43" viewBox="0 0 67 43" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 40C19 26 35 15 62 4" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M24 25C15 25 11 20 11 14c8-1 14 3 13 11ZM39 16c-2-8 2-13 8-15 3 7 0 13-8 15ZM45 14c7-1 12 2 14 7-6 4-12 1-14-7Z" fill="white"/>
+        </svg>
+      </section>
+
+      <section class="calendar">
+        <div class="section-row">
+          <div class="calendar-title">十月 <span>2026</span></div>
+          <div class="month-actions">
+            <div class="icon-btn">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m8.8 3.5-3.5 3.5 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="icon-btn">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m5.2 3.5 3.5 3.5-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+        <div class="days">
+          <div class="day muted"><div class="date">28</div></div><div class="day muted"><div class="date">29</div></div><div class="day muted"><div class="date">30</div></div>
+          <div class="day done"><div class="date">1</div><i class="dot"></i></div><div class="day done"><div class="date">2</div><i class="dot"></i></div><div class="day"><div class="date">3</div></div><div class="day done"><div class="date">4</div><i class="dot"></i></div>
+          <div class="day done"><div class="date">5</div><i class="dot"></i></div><div class="day done"><div class="date">6</div><i class="dot"></i></div><div class="day"><div class="date">7</div></div><div class="day done"><div class="date">8</div><i class="dot"></i></div><div class="day done"><div class="date">9</div><i class="dot"></i></div><div class="day done"><div class="date">10</div><i class="dot"></i></div><div class="day"><div class="date">11</div></div>
+          <div class="day done"><div class="date">12</div><i class="dot"></i></div><div class="day"><div class="date">13</div></div><div class="day done"><div class="date">14</div><i class="dot"></i></div><div class="day done"><div class="date">15</div><i class="dot"></i></div><div class="day done"><div class="date">16</div><i class="dot"></i></div><div class="day"><div class="date">17</div></div><div class="day done"><div class="date">18</div><i class="dot"></i></div>
+          <div class="day done"><div class="date">19</div><i class="dot"></i></div><div class="day done"><div class="date">20</div><i class="dot"></i></div><div class="day"><div class="date">21</div></div><div class="day done"><div class="date">22</div><i class="dot"></i></div><div class="day done"><div class="date">23</div><i class="dot"></i></div><div class="day done"><div class="date">24</div><i class="dot"></i></div><div class="day"><div class="date">25</div></div>
+          <div class="day done"><div class="date">26</div><i class="dot"></i></div><div class="day done"><div class="date">27</div><i class="dot"></i></div><div class="day selected"><div class="date">28</div><i class="dot"></i></div><div class="day"><div class="date">29</div></div><div class="day"><div class="date">30</div></div><div class="day"><div class="date">31</div></div><div class="day muted"><div class="date">1</div></div>
+        </div>
+      </section>
+
+      <section class="tasks">
+        <div class="section-row">
+          <div><div class="task-title">今日任务</div><div class="task-sub">认真完成的每一件小事，都算数</div></div>
+          <div class="task-count">4 / 7 已完成</div>
+        </div>
+        <div class="task-progress"><div class="task-progress-fill"></div></div>
+        <div class="task-list">
+          <div class="task completed"><div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m3 7.2 2.4 2.4L11 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="task-name">语文作业</div><div class="task-tag">学习</div></div>
+          <div class="task completed"><div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m3 7.2 2.4 2.4L11 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="task-name">英语校内作业</div><div class="task-tag">学习</div></div>
+          <div class="task"><div class="check"></div><div class="task-name">英语校外作业</div><div class="task-tag">待完成</div></div>
+          <div class="task completed"><div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m3 7.2 2.4 2.4L11 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="task-name">数学作业</div><div class="task-tag">学习</div></div>
+          <div class="task completed"><div class="check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m3 7.2 2.4 2.4L11 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="task-name">吃药</div><div class="task-tag">健康</div></div>
+          <div class="task"><div class="check"></div><div class="task-name">收拾书包</div><div class="task-tag">待完成</div></div>
+          <div class="task"><div class="check"></div><div class="task-name">收拾玩具</div><div class="task-tag">待完成</div></div>
+        </div>
+        <div class="actions">
+          <div class="button secondary"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4.5h10M3 8h10M3 11.5h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>安排任务</div>
+          <div class="button primary"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>新增任务</div>
+        </div>
+      </section>
+      <div class="footer">让每一次坚持，都成为看得见的成长</div>
+    </main>
+  </body>
+</html>
