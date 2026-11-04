@@ -8,6 +8,7 @@ const SESSION_DAYS = 30;
 export interface SessionUser {
   id: number;
   username: string;
+  isWechat: boolean;
 }
 
 declare global {
@@ -22,7 +23,25 @@ function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
 }
 
-export async function createSession(userId: number, res: Response): Promise<void> {
+/**
+ * 网页端使用 HttpOnly Cookie；小程序无法稳定携带 Cookie，
+ * 因此同时接受 `Authorization: Bearer <token>`。
+ */
+function readToken(req: Request): string | undefined {
+  const header = req.headers.authorization;
+  if (header) {
+    const [scheme, value] = header.split(/\s+/, 2);
+    if (scheme?.toLowerCase() === 'bearer' && value) {
+      return value.trim();
+    }
+  }
+
+  const cookie = req.cookies?.[SESSION_COOKIE];
+  if (typeof cookie === 'string' && cookie) return cookie;
+  return undefined;
+}
+
+export async function createSession(userId: number, res: Response): Promise<string> {
   const token = randomBytes(32).toString('hex');
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   const pool = getPool();
@@ -38,10 +57,11 @@ export async function createSession(userId: number, res: Response): Promise<void
     maxAge: SESSION_DAYS * 24 * 60 * 60 * 1000,
     path: '/',
   });
+  return token;
 }
 
 export async function destroySession(req: Request, res: Response): Promise<void> {
-  const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
+  const token = readToken(req);
   if (token) {
     await getPool().query('DELETE FROM sessions WHERE token_hash = ?', [hashToken(token)]);
   }
@@ -53,26 +73,30 @@ export async function requireAuth(
   res: Response,
   next: NextFunction,
 ): Promise<void> {
-  const token = req.cookies?.[SESSION_COOKIE] as string | undefined;
+  const token = readToken(req);
   if (!token) {
     res.status(401).json({ message: '请先登录' });
     return;
   }
 
   const [rows] = await getPool().query(
-    `SELECT u.id, u.username
+    `SELECT u.id, u.username, (u.wechat_openid IS NOT NULL) AS isWechat
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.token_hash = ? AND s.expires_at > NOW()
      LIMIT 1`,
     [hashToken(token)],
   );
-  const user = (rows as SessionUser[])[0];
-  if (!user) {
+  const row = (rows as Array<{ id: number; username: string; isWechat: number | boolean }>)[0];
+  if (!row) {
     res.clearCookie(SESSION_COOKIE, { path: '/' });
     res.status(401).json({ message: '登录状态已失效，请重新登录' });
     return;
   }
-  req.user = user;
+  req.user = {
+    id: Number(row.id),
+    username: row.username,
+    isWechat: Boolean(row.isWechat),
+  };
   next();
 }

@@ -1,13 +1,20 @@
 import 'dotenv/config';
 import path from 'node:path';
 import fs from 'node:fs';
+import { createHash, randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import express, { type Request, type Response } from 'express';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
+import type { PoolConnection } from 'mysql2/promise';
 import { closeDatabase, DEFAULT_TASKS, getPool, initDatabase } from './db.js';
-import { createSession, destroySession, requireAuth } from './auth.js';
+import {
+  createSession,
+  destroySession,
+  requireAuth,
+  type SessionUser,
+} from './auth.js';
 import {
   isDateKey,
   isMonthKey,
@@ -22,6 +29,21 @@ const port = Number(process.env.PORT || 3001);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '20kb' }));
 app.use(cookieParser());
+
+/**
+ * 微信小程序 wx.request 不支持 PATCH，客户端通过
+ * `X-HTTP-Method-Override: PATCH` 发起 POST，这里还原真实方法。
+ */
+app.use((req, _res, next) => {
+  const override = req.headers['x-http-method-override'];
+  if (typeof override === 'string') {
+    const method = override.toUpperCase();
+    if (method === 'PATCH' || method === 'PUT' || method === 'DELETE') {
+      req.method = method;
+    }
+  }
+  next();
+});
 
 class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -110,6 +132,134 @@ async function streakPayload(userId: number, today: string) {
   return { streak };
 }
 
+async function insertDefaultTasks(
+  connection: PoolConnection,
+  userId: number,
+  today: string,
+): Promise<void> {
+  const [taskResult] = await connection.query<ResultSetHeader>(
+    'INSERT INTO tasks (user_id, name, is_default) VALUES ?',
+    [DEFAULT_TASKS.map((name) => [userId, name, 1])],
+  );
+  await connection.query(
+    'INSERT INTO day_tasks (user_id, task_date, task_id) VALUES ?',
+    [DEFAULT_TASKS.map((_name, index) => [userId, today, taskResult.insertId + index])],
+  );
+}
+
+interface WechatSessionResponse {
+  openid?: string;
+  errcode?: number;
+  errmsg?: string;
+}
+
+function isLoopback(req: Request): boolean {
+  const address = req.ip || req.socket.remoteAddress || '';
+  return address === '::1' || address.endsWith('127.0.0.1');
+}
+
+function wechatUsername(openid: string): string {
+  const suffix = createHash('sha256').update(openid).digest('hex').slice(0, 10);
+  return `wx_${suffix}`;
+}
+
+function isProduction(): boolean {
+  return (process.env.NODE_ENV || '').toLowerCase() === 'production';
+}
+
+/**
+ * 换取微信 openid。
+ * 本地开发者工具（请求来自 127.0.0.1）在没有配置 AppID 时使用模拟账号，
+ * 方便先把流程跑通；生产环境永远不会启用模拟登录。
+ */
+async function resolveWechatOpenid(code: string, req: Request): Promise<string> {
+  const appid = (process.env.WX_APPID || '').trim();
+  const secret = (process.env.WX_SECRET || '').trim();
+  const canMock = !isProduction()
+    && (process.env.WX_LOGIN_MOCK === 'true' || (!appid && isLoopback(req)));
+  if (canMock) {
+    const mockOpenid = (process.env.WX_MOCK_OPENID || 'mock-openid-growth-checkin').trim();
+    if (!mockOpenid || mockOpenid.length > 64) return 'mock-openid-growth-checkin';
+    return mockOpenid;
+  }
+
+  if (!appid || !secret) {
+    throw new HttpError(503, '微信登录尚未配置，请先设置 WX_APPID 和 WX_SECRET');
+  }
+  if (!code) throw new HttpError(400, '微信登录凭证已失效，请重试');
+
+  const endpoint = new URL('https://api.weixin.qq.com/sns/jscode2session');
+  endpoint.searchParams.set('appid', appid);
+  endpoint.searchParams.set('secret', secret);
+  endpoint.searchParams.set('js_code', code);
+  endpoint.searchParams.set('grant_type', 'authorization_code');
+
+  let payload: WechatSessionResponse;
+  try {
+    const response = await fetch(endpoint, { signal: AbortSignal.timeout(8000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    payload = (await response.json()) as WechatSessionResponse;
+  } catch {
+    throw new HttpError(502, '无法连接微信服务器，请稍后重试');
+  }
+
+  if (payload.errcode) {
+    console.error(`[微信登录] jscode2session 返回错误：${payload.errcode} ${payload.errmsg || ''}`.trim());
+    throw new HttpError(401, '微信登录失败，请重新尝试');
+  }
+  if (!payload.openid) throw new HttpError(502, '微信登录失败，请稍后重试');
+  if (payload.openid.length > 64) throw new HttpError(502, '微信账号信息异常，请稍后重试');
+  return payload.openid;
+}
+
+async function findOrCreateWechatUser(openid: string, today: string): Promise<SessionUser> {
+  const pool = getPool();
+  const [existing] = await pool.query<RowDataPacket[]>(
+    'SELECT id, username FROM users WHERE wechat_openid = ? LIMIT 1',
+    [openid],
+  );
+  if (existing.length) {
+    return {
+      id: Number(existing[0].id),
+      username: String(existing[0].username),
+      isWechat: true,
+    };
+  }
+
+  const username = wechatUsername(openid);
+  const passwordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 12);
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query<ResultSetHeader>(
+      'INSERT INTO users (username, password_hash, wechat_openid) VALUES (?, ?, ?)',
+      [username, passwordHash, openid],
+    );
+    const userId = result.insertId;
+    await insertDefaultTasks(connection, userId, today);
+    await connection.commit();
+    return { id: userId, username, isWechat: true };
+  } catch (error) {
+    await connection.rollback();
+    if ((error as { code?: string }).code === 'ER_DUP_ENTRY') {
+      const [retry] = await pool.query<RowDataPacket[]>(
+        'SELECT id, username FROM users WHERE wechat_openid = ? LIMIT 1',
+        [openid],
+      );
+      if (retry.length) {
+        return {
+          id: Number(retry[0].id),
+          username: String(retry[0].username),
+          isWechat: true,
+        };
+      }
+    }
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
@@ -136,20 +286,7 @@ app.post('/api/auth/register', async (req, res, next) => {
         [username, passwordHash],
       );
       userId = result.insertId;
-      const taskValues = DEFAULT_TASKS.map((name) => [userId, name, 1]);
-      const [taskResult] = await connection.query<ResultSetHeader>(
-        'INSERT INTO tasks (user_id, name, is_default) VALUES ?',
-        [taskValues],
-      );
-      const dayValues = DEFAULT_TASKS.map((_name, index) => [
-        userId,
-        today,
-        taskResult.insertId + index,
-      ]);
-      await connection.query(
-        'INSERT INTO day_tasks (user_id, task_date, task_id) VALUES ?',
-        [dayValues],
-      );
+      await insertDefaultTasks(connection, userId, today);
       await connection.commit();
     } catch (error) {
       await connection.rollback();
@@ -161,8 +298,11 @@ app.post('/api/auth/register', async (req, res, next) => {
       connection.release();
     }
 
-    await createSession(userId, res);
-    res.status(201).json({ user: { id: userId, username } });
+    const token = await createSession(userId, res);
+    res.status(201).json({
+      user: { id: userId, username, isWechat: false },
+      token,
+    });
   } catch (error) {
     next(error);
   }
@@ -174,15 +314,40 @@ app.post('/api/auth/login', async (req, res, next) => {
     const password = String(req.body?.password || '');
     if (!username || !password) throw new HttpError(400, '请输入用户名和密码');
     const [rows] = await getPool().query<RowDataPacket[]>(
-      'SELECT id, username, password_hash FROM users WHERE username = ? LIMIT 1',
+      `SELECT id, username, password_hash, (wechat_openid IS NOT NULL) AS isWechat
+       FROM users WHERE username = ? LIMIT 1`,
       [username],
     );
-    const user = rows[0] as { id: number; username: string; password_hash: string } | undefined;
+    const user = rows[0] as
+      | { id: number; username: string; password_hash: string; isWechat: number | boolean }
+      | undefined;
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       throw new HttpError(401, '用户名或密码不正确');
     }
-    await createSession(user.id, res);
-    res.json({ user: { id: user.id, username: user.username } });
+    const token = await createSession(user.id, res);
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        isWechat: Boolean(user.isWechat),
+      },
+      token,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/auth/wechat', async (req, res, next) => {
+  try {
+    const code = String(req.body?.code || '');
+    const today = String(req.body?.today || '');
+    if (!isDateKey(today)) throw new HttpError(400, '日期格式不正确');
+
+    const openid = await resolveWechatOpenid(code, req);
+    const user = await findOrCreateWechatUser(openid, today);
+    const token = await createSession(user.id, res);
+    res.json({ user, token });
   } catch (error) {
     next(error);
   }
@@ -460,6 +625,11 @@ app.use((error: unknown, _req: Request, res: Response, _next: unknown) => {
 });
 
 await initDatabase();
+if (!isProduction() && !process.env.WX_APPID) {
+  console.warn(
+    '[微信登录] 未配置 WX_APPID：本机开发者工具会使用模拟微信账号；上线前请配置 WX_APPID/WX_SECRET。',
+  );
+}
 const server = app.listen(port, '0.0.0.0', () => {
   console.log(`Growth Check-in API listening on http://127.0.0.1:${port}`);
 });

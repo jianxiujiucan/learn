@@ -10,7 +10,10 @@
     "build": "vue-tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
     "test": "tsx --test server/validation.test.ts",
-    "test:e2e": "node scripts/e2e.mjs"
+    "test:e2e": "node scripts/e2e.mjs",
+    "mini:install": "npm --prefix miniprogram install",
+    "mini:dev": "npm --prefix miniprogram run dev:weapp",
+    "mini:build": "npm --prefix miniprogram run build:weapp"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

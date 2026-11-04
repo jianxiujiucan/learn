@@ -1,0 +1,1326 @@
+@use './styles/variables' as *;
+
+page {
+  min-height: 100%;
+  background: $background;
+  color: $text;
+  font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+view,
+text,
+input,
+button,
+scroll-view {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button::after {
+  border: 0;
+}
+
+/* ---------- 页面骨架 ---------- */
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  padding: 20px 18px 30px;
+  overflow: hidden;
+  background: $background;
+}
+
+.page-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orb-one {
+  width: 240px;
+  height: 240px;
+  top: -120px;
+  right: -80px;
+  background: $primary-muted;
+}
+
+.orb-two {
+  width: 180px;
+  height: 180px;
+  left: -90px;
+  bottom: 6%;
+  background: rgba(166, 228, 136, 0.28);
+}
+
+.page-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- 顶部 ---------- */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  margin-right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: $primary-soft;
+  border-radius: 14px;
+}
+
+.leaf-shape {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  background: $primary-dark;
+  border-radius: 0 100% 0 100%;
+  transform: rotate(-10deg);
+}
+
+.leaf-shape::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  bottom: -4px;
+  width: 16px;
+  height: 2px;
+  background: $primary-dark;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  transform-origin: left center;
+}
+
+.brand-title {
+  display: block;
+  color: $text;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.brand-sub {
+  display: block;
+  margin-top: 1px;
+  color: $text-secondary;
+  font-size: 10px;
+  letter-spacing: 1px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.today-btn {
+  min-height: 34px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-dark;
+  background: $primary-faint;
+  border: 1px solid $border;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.today-btn.is-selected {
+  color: #ffffff;
+  background: $primary;
+  border-color: $primary;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  margin-left: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary;
+  background: $primary-pale;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.logout-btn {
+  min-height: 34px;
+  margin-left: 4px;
+  padding: 0 7px;
+  display: flex;
+  align-items: center;
+  color: $text-muted;
+  background: transparent;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.page-error {
+  margin-top: 16px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: $danger;
+  background: $danger-soft;
+  border-radius: 11px;
+  font-size: 11px;
+}
+
+.page-error-text {
+  min-width: 0;
+  flex: 1;
+  word-break: break-all;
+}
+
+.page-error-retry {
+  margin-left: 10px;
+  padding: 3px 8px;
+  flex: 0 0 auto;
+  color: $danger;
+  background: #ffffff;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+/* ---------- 英雄卡 ---------- */
+
+.hero-card {
+  position: relative;
+  min-height: 176px;
+  margin-top: 22px;
+  padding: 23px 22px;
+  overflow: hidden;
+  color: #ffffff;
+  background: linear-gradient(125deg, $primary 0%, $primary 64%, $gradient-end 100%);
+  border-radius: 28px;
+  box-shadow: 0 16px 30px $shadow;
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  top: -95px;
+  right: -65px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  padding-right: 134px;
+}
+
+.hero-date {
+  display: block;
+  color: $hero-muted;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.hero-title {
+  display: block;
+  margin-top: 6px;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.hero-subtitle {
+  display: block;
+  margin-top: 5px;
+  color: $hero-text;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.streak-pill {
+  display: inline-flex;
+  margin-top: 14px;
+  padding: 5px 10px;
+  align-items: center;
+  color: $primary-deep;
+  background: $accent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.streak-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  background: $primary;
+  border-radius: 50%;
+}
+
+.ring {
+  position: absolute;
+  z-index: 2;
+  top: 28px;
+  right: 22px;
+  width: 112px;
+  height: 112px;
+  padding: 9px;
+  border-radius: 50%;
+}
+
+.ring-inner {
+  width: 94px;
+  height: 94px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #47a069, #58b078);
+  border-radius: 50%;
+}
+
+.ring-value {
+  color: #ffffff;
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ring-total {
+  color: $hero-muted;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.ring-label {
+  margin-top: 4px;
+  color: $hero-muted;
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.hero-decoration {
+  position: absolute;
+  right: 26px;
+  bottom: 14px;
+  width: 64px;
+  height: 2px;
+  background: $accent;
+  border-radius: 2px;
+  opacity: 0.45;
+  transform: rotate(-20deg);
+}
+
+/* ---------- 日历 ---------- */
+
+.calendar-card {
+  margin-top: 20px;
+  padding: 18px 16px 14px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px $shadow-card;
+  transition: opacity 0.16s ease;
+}
+
+.calendar-card.is-loading {
+  opacity: 0.65;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.month-title {
+  padding: 3px 0;
+  display: flex;
+  align-items: center;
+  color: $text;
+}
+
+.month-title-text {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.calendar-icon {
+  position: relative;
+  width: 16px;
+  height: 15px;
+  margin-right: 7px;
+  border: 1.5px solid $primary;
+  border-radius: 4px;
+}
+
+.calendar-icon::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 0;
+  right: 0;
+  height: 1.5px;
+  background: $primary;
+}
+
+.calendar-icon::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 3px;
+  width: 2px;
+  height: 4px;
+  background: $primary;
+  border-radius: 2px;
+  box-shadow: 6px 0 0 $primary;
+}
+
+.month-actions {
+  display: flex;
+}
+
+.month-arrow {
+  width: 31px;
+  height: 31px;
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
+  background: $primary-faint;
+  border-radius: 10px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.weekdays {
+  display: flex;
+  margin: 12px 0 3px;
+}
+
+.weekday {
+  width: 14.2857%;
+  padding: 4px 0;
+  color: $text-muted;
+  font-size: 10px;
+  text-align: center;
+}
+
+.calendar-grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.day-cell {
+  position: relative;
+  width: 14.2857%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-number {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
+  border-radius: 50%;
+  font-size: 11px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.day-cell.outside .day-number {
+  color: $text-disabled;
+}
+
+.day-cell.complete .day-number {
+  color: $primary-dark;
+  background: $primary-pale;
+  font-weight: 600;
+}
+
+.day-cell.today .day-number {
+  box-shadow: inset 0 0 0 1px $primary;
+}
+
+.day-cell.selected .day-number {
+  color: #ffffff;
+  background: $primary;
+  box-shadow: 0 5px 12px $shadow;
+  font-weight: 700;
+}
+
+.day-dot {
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  background: $primary;
+  border-radius: 50%;
+}
+
+.day-cell.partial .day-dot,
+.day-cell.selected .day-dot {
+  background: $accent;
+}
+
+/* ---------- 任务列表 ---------- */
+
+.task-section {
+  margin-top: 23px;
+}
+
+.task-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.task-heading-main {
+  min-width: 0;
+}
+
+.task-heading-title {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.task-heading-sub {
+  display: block;
+  margin-top: 2px;
+  color: $text-muted;
+  font-size: 11px;
+}
+
+.task-count {
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  color: $primary-deep;
+  background: $primary-soft;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.task-progress {
+  height: 5px;
+  margin-top: 13px;
+  overflow: hidden;
+  background: $track;
+  border-radius: 999px;
+}
+
+.task-progress-fill {
+  height: 100%;
+  background: $accent;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.task-list {
+  margin-top: 13px;
+}
+
+.task-row {
+  min-height: 57px;
+  margin-bottom: 9px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 17px;
+  box-shadow: 0 3px 10px $shadow-card;
+  transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.task-row.completed {
+  background: #fcfdf9;
+}
+
+.task-row.updating {
+  opacity: 0.65;
+}
+
+.custom-check {
+  width: 23px;
+  height: 23px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: #ffffff;
+  border: 1.5px solid $border-strong;
+  border-radius: 8px;
+}
+
+.task-row.completed .custom-check {
+  background: $primary;
+  border-color: $primary;
+}
+
+.check-mark {
+  width: 8px;
+  height: 4px;
+  margin-top: -2px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  opacity: 0;
+  transform: rotate(-45deg);
+}
+
+.task-row.completed .check-mark,
+.selection-check.checked .check-mark {
+  opacity: 1;
+}
+
+.task-name {
+  min-width: 0;
+  flex: 1;
+  color: $text;
+  font-size: 13px;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.task-row.completed .task-name {
+  color: $text-completed;
+  text-decoration: line-through;
+}
+
+.task-tag {
+  flex: 0 0 auto;
+  margin-left: 8px;
+  padding: 3px 8px;
+  color: $accent-ink;
+  background: $accent-soft;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.task-row.completed .task-tag {
+  color: $text-tag;
+  background: $primary-faint;
+}
+
+.task-actions {
+  margin-top: 14px;
+  display: flex;
+}
+
+.action-btn {
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.action-secondary {
+  width: 39%;
+  margin-right: 10px;
+  color: $primary-dark;
+  background: $primary-pale;
+  border: 1px solid $primary-soft;
+}
+
+.action-primary {
+  flex: 1;
+  color: $primary-deep;
+  background: $accent;
+  border: 1px solid $accent;
+  box-shadow: 0 7px 15px $shadow;
+}
+
+.task-loading,
+.empty-state {
+  margin-top: 13px;
+  padding: 35px 20px;
+  color: $text-muted;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 18px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.empty-state {
+  padding: 30px 20px;
+}
+
+.empty-icon {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 10px;
+  border: 2px solid $primary;
+  border-radius: 9px;
+}
+
+.empty-icon::before {
+  content: '';
+  position: absolute;
+  top: 7px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: $primary;
+}
+
+.empty-icon::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  width: 3px;
+  height: 8px;
+  background: $primary;
+  border-radius: 3px;
+  box-shadow: 13px 0 0 $primary;
+}
+
+.empty-title {
+  display: block;
+  margin-bottom: 5px;
+  color: $text;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.empty-text {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.app-footer {
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-muted;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+}
+
+.footer-dot {
+  width: 5px;
+  height: 5px;
+  margin-right: 5px;
+  background: $primary;
+  border-radius: 50%;
+}
+
+/* ---------- 底部弹层 ---------- */
+
+.sheet-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(24, 59, 44, 0.38);
+  animation: fade-in 0.16s ease;
+}
+
+.sheet-backdrop {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.sheet {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-height: 86vh;
+  padding: 12px 22px 22px;
+  padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: $surface;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 30px $shadow-soft;
+  animation: sheet-up 0.2s ease;
+}
+
+.sheet-handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 14px;
+  background: $border;
+  border-radius: 999px;
+}
+
+.sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.sheet-header-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.sheet-title {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sheet-subtitle {
+  display: block;
+  margin-top: 3px;
+  color: $text-secondary;
+  font-size: 12px;
+}
+
+.sheet-close {
+  width: 38px;
+  height: 38px;
+  margin-left: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: $text-secondary;
+  background: $primary-faint;
+  border-radius: 12px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.selection-tools {
+  margin-top: 18px;
+  padding-bottom: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: $text-muted;
+  font-size: 11px;
+}
+
+.selection-tool-actions {
+  display: flex;
+}
+
+.text-btn {
+  margin-left: 6px;
+  padding: 3px 7px;
+  color: $primary-dark;
+  background: $primary-faint;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.action-error {
+  display: block;
+  margin-bottom: 10px;
+  color: $danger;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.library-empty {
+  padding: 24px 0;
+  color: $text-muted;
+  font-size: 12px;
+  text-align: center;
+}
+
+.sheet-scroll {
+  width: 100%;
+}
+
+.selection-list {
+  border-top: 1px solid $border;
+}
+
+.selection-row {
+  min-height: 51px;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid $border;
+}
+
+.delete-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.task-select-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.task-select {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.selection-check {
+  width: 22px;
+  height: 22px;
+  margin-right: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  background: #ffffff;
+  border: 1.5px solid $border-strong;
+  border-radius: 7px;
+}
+
+.selection-check.checked {
+  background: $primary;
+  border-color: $primary;
+}
+
+.selection-check .check-mark {
+  width: 8px;
+  height: 4px;
+}
+
+.selection-row .task-name {
+  font-size: 13px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.mini-btn {
+  min-height: 30px;
+  margin-left: 6px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
+  background: $primary-faint;
+  border-radius: 8px;
+  font-size: 11px;
+}
+
+.mini-btn.danger {
+  color: $danger;
+  background: $danger-soft;
+}
+
+.edit-form {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.edit-input {
+  min-width: 0;
+  height: 36px;
+  padding: 6px 10px;
+  flex: 1;
+  color: $text;
+  background: $background;
+  border: 1px solid $primary;
+  border-radius: 9px;
+  font-size: 12px;
+}
+
+.delete-message {
+  min-width: 0;
+  flex: 1;
+  padding-right: 8px;
+}
+
+.delete-title {
+  display: block;
+  color: $danger;
+  font-size: 12px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.delete-sub {
+  display: block;
+  margin-top: 2px;
+  color: $text-muted;
+  font-size: 10px;
+}
+
+.sheet-submit {
+  width: 100%;
+  min-height: 47px;
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $primary-deep;
+  background: $accent;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sheet-submit.is-disabled {
+  opacity: 0.55;
+}
+
+/* ---------- 表单 ---------- */
+
+.field-label {
+  display: block;
+  margin: 20px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.task-input {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px 14px;
+  color: $text;
+  background: $background;
+  border: 1px solid $border-strong;
+  border-radius: 13px;
+  font-size: 14px;
+}
+
+.field-meta {
+  min-height: 25px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: $text-muted;
+  font-size: 10px;
+}
+
+.field-hint {
+  color: $text-muted;
+}
+
+.error-text {
+  color: $danger;
+}
+
+.add-submit {
+  margin-top: 14px;
+}
+
+/* ---------- 登录页 ---------- */
+
+.login-root {
+  min-height: 100vh;
+  background: $background;
+}
+
+.auth-page {
+  position: relative;
+  min-height: 100vh;
+  padding: 28px 20px 34px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  background: $background;
+}
+
+.auth-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.auth-orb-one {
+  width: 360px;
+  height: 360px;
+  top: -170px;
+  right: -90px;
+  background: $primary-muted;
+}
+
+.auth-orb-two {
+  width: 250px;
+  height: 250px;
+  left: -110px;
+  bottom: -80px;
+  background: rgba(166, 228, 136, 0.28);
+}
+
+.auth-intro {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.auth-leaf {
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-soft;
+  border-radius: 19px;
+  transform: rotate(-5deg);
+}
+
+.auth-leaf .leaf-shape {
+  width: 28px;
+  height: 28px;
+}
+
+.auth-title {
+  display: block;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.auth-subtitle {
+  display: block;
+  margin-top: 5px;
+  color: $text-secondary;
+  font-size: 12px;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: 22px;
+  padding: 22px 20px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 23px;
+  box-shadow: 0 24px 60px $shadow-soft;
+}
+
+.wechat-btn {
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: $primary;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px $shadow;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.wechat-btn.is-disabled {
+  opacity: 0.6;
+}
+
+.wechat-badge {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+}
+
+.wechat-badge-dot {
+  width: 9px;
+  height: 9px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 6px 0 0 rgba(255, 255, 255, 0.55);
+}
+
+.auth-note {
+  display: block;
+  margin-top: 10px;
+  color: $text-muted;
+  font-size: 10px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.auth-divider {
+  margin: 18px 0 14px;
+  display: flex;
+  align-items: center;
+}
+
+.divider-line {
+  height: 1px;
+  flex: 1;
+  background: $border;
+}
+
+.divider-text {
+  margin: 0 9px;
+  color: $text-muted;
+  font-size: 10px;
+}
+
+.link-btn {
+  padding: 8px 0;
+  color: $primary-dark;
+  font-size: 12px;
+  text-align: center;
+}
+
+.account-form {
+  margin-top: 4px;
+}
+
+.input-shell {
+  min-height: 46px;
+  margin-bottom: 10px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  background: $background;
+  border: 1px solid $border;
+  border-radius: 13px;
+}
+
+.input-shell.is-invalid {
+  border-color: $danger;
+}
+
+.auth-input {
+  width: 100%;
+  height: 44px;
+  color: $text;
+  background: transparent;
+  font-size: 13px;
+}
+
+.auth-submit {
+  width: 100%;
+  min-height: 46px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: $primary-dark;
+  border-radius: 13px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.auth-submit.is-disabled {
+  opacity: 0.6;
+}
+
+.auth-error {
+  display: block;
+  margin-top: 10px;
+  padding: 8px 10px;
+  color: $danger;
+  background: $danger-soft;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.auth-switch {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.checking-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: $text-secondary;
+  background: $background;
+  font-size: 12px;
+}
+
+.checking-spinner {
+  width: 22px;
+  height: 22px;
+  margin-bottom: 12px;
+  border: 3px solid $primary-pale;
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   username: string;
+  isWechat?: boolean;
 }
 
 export interface LibraryTask {

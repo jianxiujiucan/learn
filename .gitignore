@@ -5,3 +5,6 @@ dist/
 playwright-report/
 test-results/
 artifacts/
+miniprogram/dist/
+miniprogram/.temp/
+miniprogram/.swc/

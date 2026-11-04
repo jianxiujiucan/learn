@@ -49,7 +49,9 @@ export async function initDatabase(): Promise<void> {
       id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       username VARCHAR(20) NOT NULL UNIQUE,
       password_hash VARCHAR(100) NOT NULL,
-      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      wechat_openid VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_users_wechat (wechat_openid)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
     `CREATE TABLE IF NOT EXISTS sessions (
       token_hash CHAR(64) NOT NULL PRIMARY KEY,
@@ -92,6 +94,35 @@ export async function initDatabase(): Promise<void> {
 
   for (const statement of statements) {
     await pool.query(statement);
+  }
+
+  await ensureWechatColumns(pool);
+}
+
+/**
+ * 兼容已存在的旧库：自动补上微信 openid 列与唯一索引。
+ */
+async function ensureWechatColumns(pool: Pool): Promise<void> {
+  const [columns] = await pool.query(
+    `SELECT COLUMN_NAME
+     FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'wechat_openid'`,
+    [databaseName],
+  );
+  if (!Array.isArray(columns) || columns.length === 0) {
+    await pool.query(
+      'ALTER TABLE users ADD COLUMN wechat_openid VARCHAR(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL AFTER password_hash',
+    );
+  }
+
+  const [indexes] = await pool.query(
+    `SELECT INDEX_NAME
+     FROM information_schema.STATISTICS
+     WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'uq_users_wechat'`,
+    [databaseName],
+  );
+  if (!Array.isArray(indexes) || indexes.length === 0) {
+    await pool.query('ALTER TABLE users ADD UNIQUE KEY uq_users_wechat (wechat_openid)');
   }
 }
 
