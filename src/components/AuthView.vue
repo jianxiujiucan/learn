@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { api, ApiError } from "../api";
 import { passwordError, usernameError } from "../../shared/validation";
 import { todayKey } from "../utils/date";
@@ -21,6 +21,34 @@ const errors = reactive({
   general: "",
 });
 
+/** 字段是否被用户碰过（失焦过），用来决定何时提示格式要求 */
+const touched = reactive({
+  username: false,
+  password: false,
+});
+
+/**
+ * 格式提示默认不显示，只有用户在当前字段里输入了不合法内容才出现，
+ * 避免注册页一进来就被两行规则塞满。
+ */
+const showUsernameHint = computed(
+  () =>
+    mode.value === "register" &&
+    touched.username &&
+    !errors.username &&
+    username.value.trim() !== "" &&
+    Boolean(usernameError(username.value))
+);
+
+const showPasswordHint = computed(
+  () =>
+    mode.value === "register" &&
+    touched.password &&
+    !errors.password &&
+    password.value !== "" &&
+    Boolean(passwordError(password.value))
+);
+
 function clearErrors() {
   errors.username = "";
   errors.password = "";
@@ -32,6 +60,8 @@ function switchMode(next: "login" | "register") {
   mode.value = next;
   password.value = "";
   confirmPassword.value = "";
+  touched.username = false;
+  touched.password = false;
   clearErrors();
 }
 
@@ -134,11 +164,22 @@ async function submit() {
             placeholder="请输入用户名"
             maxlength="20"
             @input="errors.username = ''"
+            @blur="touched.username = true"
           />
         </div>
-        <p v-if="errors.username" class="field-error">{{ errors.username }}</p>
-        <p v-else-if="mode === 'register'" class="field-hint">
-          2–20 位中文、字母、数字或下划线
+        <p class="field-hint">
+          <span
+            class="field-hint__error"
+            :class="{ 'is-hidden': !errors.username }"
+          >
+            {{ errors.username }}
+          </span>
+          <span
+            class="field-hint__text"
+            :class="{ 'is-hidden': !showUsernameHint }"
+          >
+            2–20 位中文、字母、数字或下划线
+          </span>
         </p>
 
         <label class="field-label" for="auth-password">密码</label>
@@ -156,6 +197,7 @@ async function submit() {
             "
             maxlength="64"
             @input="errors.password = ''"
+            @blur="touched.password = true"
           />
           <button
             class="password-toggle"
@@ -167,9 +209,19 @@ async function submit() {
             <AppIcon :name="showPassword ? 'eye' : 'eye-off'" :size="20" />
           </button>
         </div>
-        <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
-        <p v-else-if="mode === 'register'" class="field-hint">
-          8–64 位，需同时包含字母和数字
+        <p class="field-hint">
+          <span
+            class="field-hint__error"
+            :class="{ 'is-hidden': !errors.password }"
+          >
+            {{ errors.password }}
+          </span>
+          <span
+            class="field-hint__text"
+            :class="{ 'is-hidden': !showPasswordHint }"
+          >
+            8–64 位，需同时包含字母和数字
+          </span>
         </p>
 
         <template v-if="mode === 'register'">
@@ -202,13 +254,7 @@ async function submit() {
           {{ errors.general }}
         </p>
         <button class="auth-submit" type="submit" :disabled="submitting">
-          {{
-            submitting
-              ? "请稍候…"
-              : mode === "login"
-              ? "登录并开始打卡"
-              : "注册并开始打卡"
-          }}
+          {{ submitting ? "请稍候…" : mode === "login" ? "登录" : "注册" }}
         </button>
       </form>
     </section>
@@ -343,7 +389,7 @@ async function submit() {
 
 .field-label {
   display: block;
-  margin: 0.9375rem 0 0.4375rem;
+  margin: 0.3rem 0 0.4375rem;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -401,8 +447,19 @@ async function submit() {
   margin-top: 0.3125rem;
   font-size: 0.8rem;
 }
+/* 提示行始终占位，只用 visibility 切换，避免显隐时表单跳动 */
 .field-hint {
+  display: grid;
   color: var(--color-text-muted);
+}
+.field-hint > span {
+  grid-area: 1 / 1;
+}
+.field-hint .is-hidden {
+  visibility: hidden;
+}
+.field-hint__error {
+  color: var(--color-danger);
 }
 .field-error {
   color: var(--color-danger);
