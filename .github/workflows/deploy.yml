@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Type-check and build
+        run: npm run build
+
+      - name: Package runtime files
+        run: tar -czf app.tar.gz dist server shared package.json package-lock.json
+
+      - name: Upload and deploy
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          scp -P "$SSH_PORT" -i ~/.ssh/deploy_key app.tar.gz \
+            "$SSH_USER@$SSH_HOST:/tmp/app.tar.gz"
+          ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key \
+            "$SSH_USER@$SSH_HOST" 'sudo /usr/local/bin/growth-deploy.sh /tmp/app.tar.gz'
+
+      - name: Smoke test
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          for i in $(seq 1 10); do
+            code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' "http://${SSH_HOST}/daily/api/health" || true)
+            if [ "$code" = "200" ]; then
+              echo "health check ok (attempt $i)"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "health check failed, last status: ${code:-none}"
+          exit 1

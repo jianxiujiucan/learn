@@ -45,6 +45,20 @@ app.use((req, _res, next) => {
   next();
 });
 
+/**
+ * 站点统一挂在 APP_BASE（默认 /daily）下：
+ * 页面是 /daily/，接口是 /daily/api/*，内部再还原成 /api/* 交给原有路由。
+ * 裸 /api/* 仍然可用，方便微信小程序端直连。
+ */
+const APP_BASE = (process.env.APP_BASE || '/daily').replace(/\/+$/, '');
+
+app.use((req, _res, next) => {
+  if (req.url.startsWith(`${APP_BASE}/api/`)) {
+    req.url = req.url.slice(APP_BASE.length);
+  }
+  next();
+});
+
 class HttpError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -601,9 +615,18 @@ app.use('/api', (_req, res) => {
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(currentDir, '../dist');
 if (fs.existsSync(distDir)) {
-  app.use(express.static(distDir));
+  app.get('/', (_req, res) => {
+    res.redirect(302, `${APP_BASE}/`);
+  });
+
+  app.use(APP_BASE, express.static(distDir));
+
   app.use((req, res, next) => {
-    if (req.method === 'GET' && req.accepts('html')) {
+    if (req.method !== 'GET' || !req.accepts('html')) {
+      next();
+      return;
+    }
+    if (req.path === APP_BASE || req.path.startsWith(`${APP_BASE}/`)) {
       res.sendFile(path.join(distDir, 'index.html'));
       return;
     }
@@ -630,8 +653,13 @@ if (!isProduction() && !process.env.WX_APPID) {
     '[微信登录] 未配置 WX_APPID：本机开发者工具会使用模拟微信账号；上线前请配置 WX_APPID/WX_SECRET。',
   );
 }
-const server = app.listen(port, '0.0.0.0', () => {
-  console.log(`Growth Check-in API listening on http://127.0.0.1:${port}`);
+/**
+ * 监听地址可通过 HOST 覆盖：服务器上只绑定 127.0.0.1，由 Nginx 对外，
+ * 避免 3001 绕过反向代理直接暴露在公网。
+ */
+const host = process.env.HOST || '0.0.0.0';
+const server = app.listen(port, host, () => {
+  console.log(`Growth Check-in API listening on http://${host}:${port}`);
 });
 
 async function shutdown() {

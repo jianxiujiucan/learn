@@ -8,3 +8,4 @@ artifacts/
 miniprogram/dist/
 miniprogram/.temp/
 miniprogram/.swc/
+.deploy/
