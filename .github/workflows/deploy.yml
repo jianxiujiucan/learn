@@ -43,10 +43,12 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
-          scp -P "$SSH_PORT" -i ~/.ssh/deploy_key app.tar.gz \
-            "$SSH_USER@$SSH_HOST:/tmp/app.tar.gz"
+          # 用 deploy 用户自己的投递目录 + 每次唯一的文件名，
+          # 避免覆盖别人留下的同名文件导致 Permission denied
+          PKG="/var/lib/growth-checkin/incoming/app-${GITHUB_SHA}.tar.gz"
+          scp -P "$SSH_PORT" -i ~/.ssh/deploy_key app.tar.gz "$SSH_USER@$SSH_HOST:$PKG"
           ssh -p "$SSH_PORT" -i ~/.ssh/deploy_key \
-            "$SSH_USER@$SSH_HOST" 'sudo /usr/local/bin/growth-deploy.sh /tmp/app.tar.gz'
+            "$SSH_USER@$SSH_HOST" "sudo /usr/local/bin/growth-deploy.sh $PKG"
 
       - name: Smoke test
         env:
